@@ -278,7 +278,8 @@
                     <div id="seccionNuevoComentario" class="d-none">
                         <label for="textoComentarioAdmin" class="form-label small fw-bold">Escribe un comentario o novedad:</label>
                         <textarea id="textoComentarioAdmin" class="form-control form-control-sm mb-2" rows="2" placeholder="Novedad logística..."></textarea>
-                        <button class="btn btn-success btn-sm px-4" onclick="enviarComentarioAdmin()">Agregar Comentario</button>
+                        <!-- IMPORTANTE: type="button" añadido para prevenir el cierre de sesión -->
+                        <button type="button" class="btn btn-success btn-sm px-4" onclick="enviarComentarioAdmin()">Agregar Comentario</button>
                     </div>
                 </div>
             </div>
