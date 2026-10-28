@@ -30,11 +30,11 @@
             <form id="formLogin">
                 <div class="mb-3">
                     <label for="loginUser" class="form-label small fw-bold">Usuario / Empresa</label>
-                    <input type="text" id="loginUser" name="loginUser" class="form-control" placeholder="Ej: corferias o admin" required>
+                    <input type="text" id="loginUser" class="form-control" placeholder="Ej: corferias o admin" required>
                 </div>
                 <div class="mb-3">
                     <label for="loginPass" class="form-label small fw-bold">Contraseña</label>
-                    <input type="password" id="loginPass" name="loginPass" class="form-control" placeholder="••••••••" required>
+                    <input type="password" id="loginPass" class="form-control" placeholder="••••••••" required>
                 </div>
                 <button type="submit" class="btn btn-primary w-100 mb-2 fw-bold">Ingresar</button>
                 <button type="button" class="btn btn-outline-secondary w-100 btn-sm" onclick="mostrarRegistro(true)">Registrarse como Cliente / Empresa</button>
@@ -191,7 +191,6 @@
             <button class="btn btn-outline-light btn-sm" onclick="cerrarSesion()">Cerrar Sesión</button>
         </div>
 
-        <!-- Pestañas de Admin -->
         <ul class="nav nav-tabs mb-3" id="adminTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active fw-bold" id="tickets-tab" data-bs-toggle="tab" data-bs-target="#ticketsContent" type="button">Gestión de Solicitudes</button>
@@ -202,7 +201,6 @@
         </ul>
 
         <div class="tab-content" id="adminTabsContent">
-            <!-- PESTAÑA TICKETS -->
             <div class="tab-pane fade show active" id="ticketsContent" role="tabpanel">
                 <div class="card p-4 shadow-sm border-0 bg-white mb-4">
                     <h5 class="mb-3 fw-bold text-success">🟢 Solicitudes Activas en Proceso</h5>
@@ -243,7 +241,6 @@
                 </div>
             </div>
 
-            <!-- PESTAÑA INVENTARIO -->
             <div class="tab-pane fade" id="inventarioContent" role="tabpanel">
                 <div class="card p-4 shadow-sm border-0 bg-white">
                     <h5 class="mb-3 fw-bold text-primary">📦 Control de Equipos por Serial Individual</h5>
@@ -378,11 +375,11 @@
             const contenedor = document.getElementById('listaCatalogoCheckboxes');
             contenedor.innerHTML = unicos.map((nombreEq, index) => `
                 <div class="form-check mb-2 border-bottom pb-1">
-                    <input class="form-check-input equipo-check" type="checkbox" value="${nombreEq}" id="eq_${index}" name="equipo_opcion_${index}">
+                    <input class="form-check-input equipo-check" type="checkbox" value="${nombreEq}" id="eq_${index}">
                     <label class="form-check-label small fw-bold text-dark" for="eq_${index}">${nombreEq}</label>
                     <div class="input-group input-group-sm mt-1 w-50">
                         <span class="input-group-text" id="label_cant_${index}">Cant:</span>
-                        <input type="number" class="form-control form-control-sm cantidad-equipo" value="1" min="1" id="cant_${index}" name="cant_${index}" aria-describedby="label_cant_${index}">
+                        <input type="number" class="form-control form-control-sm cantidad-equipo" value="1" min="1" id="cant_${index}" aria-describedby="label_cant_${index}">
                     </div>
                 </div>
             `).join('');
@@ -450,11 +447,27 @@
 
         function renderFilaTicketCliente(t) {
             const listaEquipos = t.detalles.map(d => `• ${d.equipo_nombre} (<b>${d.cantidad} un.</b>)`).join('<br>');
+            
+            let alertaVenc = '';
+            if (t.fecha_vencimiento) {
+                const hoy = new Date();
+                const venc = new Date(t.fecha_vencimiento);
+                const diferenciaDias = Math.ceil((venc - hoy) / (1000 * 60 * 60 * 24));
+                
+                if (diferenciaDias < 0) {
+                    alertaVenc = `<br><span class="badge bg-danger mt-1">⚠️ Vencido el ${t.fecha_vencimiento}</span>`;
+                } else if (diferenciaDias <= 5) {
+                    alertaVenc = `<br><span class="badge bg-warning text-dark mt-1">⚠️ Vence en ${diferenciaDias} días</span>`;
+                } else {
+                    alertaVenc = `<br><small class="text-muted">📅 Vence: ${t.fecha_vencimiento}</small>`;
+                }
+            }
+
             return `
                 <tr>
                     <td>#TKT-2026-${String(t.id).padStart(4, '0')}</td>
-                    <td><b>Dir:</b> ${t.direccion_entrega}<br><small class="text-muted">👤 Recibe: ${t.persona_recibe || 'N/A'} (${t.horario_recepcion || ''})</small></td>
-                    <td>${listaEquipos}<br><span class="badge bg-light text-dark border mt-1">⏱️ ${t.tiempo_alquiler}</span></td>
+                    <td><b>Dir:</b> ${t.direccion_entrega}<br><small class="text-muted">👤 Recibe: ${t.persona_recibe || 'N/A'}</small></td>
+                    <td>${listaEquipos}<br><span class="badge bg-light text-dark border mt-1">⏱️ ${t.tiempo_alquiler}</span>${alertaVenc}</td>
                     <td><span class="badge bg-success">${t.estado_logistico}</span></td>
                     <td><button class="btn btn-sm btn-outline-primary py-0" onclick="verDetalleTicket(${t.id}, false)">Ver Línea de Tiempo</button></td>
                 </tr>
@@ -482,11 +495,26 @@
             const listaEquipos = t.detalles.map(d => `• ${d.equipo_nombre} (<b>${d.cantidad} un.</b>)`).join('<br>');
             const esCerrado = t.estado_logistico === '8. Cerrado';
 
+            let alertaVenc = '';
+            if (t.fecha_vencimiento && !esCerrado) {
+                const hoy = new Date();
+                const venc = new Date(t.fecha_vencimiento);
+                const diferenciaDias = Math.ceil((venc - hoy) / (1000 * 60 * 60 * 24));
+                
+                if (diferenciaDias < 0) {
+                    alertaVenc = `<br><span class="badge bg-danger mt-1">⚠️ Vencido (${t.fecha_vencimiento})</span>`;
+                } else if (diferenciaDias <= 5) {
+                    alertaVenc = `<br><span class="badge bg-warning text-dark mt-1">⚠️ Vence en ${diferenciaDias} días</span>`;
+                } else {
+                    alertaVenc = `<br><small class="text-muted">📅 Vence: ${t.fecha_vencimiento}</small>`;
+                }
+            }
+
             return `
                 <tr>
                     <td>#TKT-2026-${String(t.id).padStart(4, '0')}</td>
                     <td><b>${t.cliente_empresa}</b><br><small class="text-muted">NIT: ${t.nit}</small><br><small>📍 ${t.direccion_entrega}</small></td>
-                    <td>${listaEquipos}<br><small class="text-muted">Recibe: ${t.persona_recibe} (${t.horario_recepcion})</small></td>
+                    <td>${listaEquipos}<br><small class="text-muted">Recibe: ${t.persona_recibe}</small>${alertaVenc}</td>
                     <td>
                         <select class="form-select form-select-sm" onchange="actualizarAsignacion(${t.id}, this.value)">
                             <option value="Sin Asignar">Operador...</option>
@@ -546,8 +574,7 @@
 
         async function verDetalleTicket(id, esAdmin) {
             document.getElementById('modalTicketId').value = id;
-            const seccionComentario = document.getElementById('seccionNuevoComentario');
-            seccionComentario.classList.remove('d-none');
+            document.getElementById('seccionNuevoComentario').classList.remove('d-none');
 
             const res = await fetch(`/api/tickets/${id}/detalle`);
             const data = await res.json();

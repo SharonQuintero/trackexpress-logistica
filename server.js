@@ -20,6 +20,8 @@ const db = new sqlite3.Database(dbFile, (err) => {
 });
 
 db.serialize(() => {
+    // Si prefieres mantener datos, cambia a CREATE TABLE IF NOT EXISTS. 
+    // Usamos esto para evitar cualquier bloqueo de caché en pruebas:
     db.run(`CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         usuario TEXT UNIQUE,
@@ -56,6 +58,7 @@ db.serialize(() => {
         tiempo_alquiler TEXT DEFAULT '1 Mes',
         estado_logistico TEXT DEFAULT '1. Solicitado',
         asignado_a TEXT DEFAULT 'Sin Asignar',
+        fecha_vencimiento TEXT,
         fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
@@ -112,11 +115,18 @@ app.post('/api/auth/registro', (req, res) => {
     const { usuario, password, nit, razon_social, contacto_persona, telefono, correo, direccion } = req.body;
     if (!usuario || !password) return res.status(400).json({ error: "Completa los campos obligatorios" });
     
-    const sql = `INSERT INTO usuarios (usuario, password, rol, nit, razon_social, contacto_persona, telefono, correo, direccion) 
-                 VALUES (?, ?, 'cliente', ?, ?, ?, ?, ?, ?)`;
-    db.run(sql, [usuario, password, nit, razon_social, contacto_persona, telefono, correo, direccion], function(err) {
-        if (err) return res.status(400).json({ error: "El usuario ya existe" });
-        res.json({ message: "Registrado con éxito", id: this.lastID });
+    // Verificamos primero si existe para dar un mensaje claro
+    db.get("SELECT id FROM usuarios WHERE usuario = ?", [usuario], (err, row) => {
+        if (row) {
+            return res.status(400).json({ error: "El nombre de usuario ya está en uso. Elige otro." });
+        }
+
+        const sql = `INSERT INTO usuarios (usuario, password, rol, nit, razon_social, contacto_persona, telefono, correo, direccion) 
+                     VALUES (?, ?, 'cliente', ?, ?, ?, ?, ?, ?)`;
+        db.run(sql, [usuario, password, nit, razon_social || nit, contacto_persona, telefono, correo, direccion], function(err2) {
+            if (err2) return res.status(500).json({ error: err2.message });
+            res.json({ message: "Registrado con éxito", id: this.lastID });
+        });
     });
 });
 
@@ -162,10 +172,20 @@ app.post('/api/tickets', (req, res) => {
         return res.status(400).json({ error: "Debe seleccionar al menos un equipo." });
     }
 
-    const sqlTicket = `INSERT INTO tickets (cliente_empresa, nit, direccion_entrega, horario_recepcion, persona_recibe, ciudad_destino, area_destino, tiempo_alquiler, estado_logistico) 
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, '1. Solicitado')`;
+    let diasAdd = 30;
+    if (tiempo_alquiler === '3 Meses') diasAdd = 90;
+    if (tiempo_alquiler === '6 Meses') diasAdd = 180;
+    if (tiempo_alquiler === '1 Año') diasAdd = 365;
+    if (tiempo_alquiler?.includes('Indefinido')) diasAdd = 3650;
+
+    const fechaVenc = new Date();
+    fechaVenc.setDate(fechaVenc.getDate() + diasAdd);
+    const fechaVencStr = fechaVenc.toISOString().split('T')[0];
+
+    const sqlTicket = `INSERT INTO tickets (cliente_empresa, nit, direccion_entrega, horario_recepcion, persona_recibe, ciudad_destino, area_destino, tiempo_alquiler, estado_logistico, fecha_vencimiento) 
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, '1. Solicitado', ?)`;
     
-    db.run(sqlTicket, [cliente_empresa, nit, direccion_entrega, horario_recepcion, persona_recibe, ciudad_destino, area_destino, tiempo_alquiler || '1 Mes'], function(err) {
+    db.run(sqlTicket, [cliente_empresa, nit, direccion_entrega, horario_recepcion, persona_recibe, ciudad_destino, area_destino, tiempo_alquiler || '1 Mes', fechaVencStr], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         const ticketId = this.lastID;
 
