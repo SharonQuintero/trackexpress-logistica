@@ -20,8 +20,6 @@ const db = new sqlite3.Database(dbFile, (err) => {
 });
 
 db.serialize(() => {
-    // Si prefieres mantener datos, cambia a CREATE TABLE IF NOT EXISTS. 
-    // Usamos esto para evitar cualquier bloqueo de caché en pruebas:
     db.run(`CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         usuario TEXT UNIQUE,
@@ -56,6 +54,8 @@ db.serialize(() => {
         ciudad_destino TEXT NOT NULL,
         area_destino TEXT NOT NULL,
         tiempo_alquiler TEXT DEFAULT '1 Mes',
+        tipo_ticket TEXT DEFAULT 'Alquiler',
+        categoria_incidencia TEXT DEFAULT 'N/A',
         estado_logistico TEXT DEFAULT '1. Solicitado',
         asignado_a TEXT DEFAULT 'Sin Asignar',
         fecha_vencimiento TEXT,
@@ -115,7 +115,6 @@ app.post('/api/auth/registro', (req, res) => {
     const { usuario, password, nit, razon_social, contacto_persona, telefono, correo, direccion } = req.body;
     if (!usuario || !password) return res.status(400).json({ error: "Completa los campos obligatorios" });
     
-    // Verificamos primero si existe para dar un mensaje claro
     db.get("SELECT id FROM usuarios WHERE usuario = ?", [usuario], (err, row) => {
         if (row) {
             return res.status(400).json({ error: "El nombre de usuario ya está en uso. Elige otro." });
@@ -167,8 +166,9 @@ app.get('/api/tickets', (req, res) => {
 });
 
 app.post('/api/tickets', (req, res) => {
-    const { cliente_empresa, nit, direccion_entrega, horario_recepcion, persona_recibe, ciudad_destino, area_destino, tiempo_alquiler, items } = req.body;
-    if (!items || items.length === 0) {
+    const { cliente_empresa, nit, direccion_entrega, horario_recepcion, persona_recibe, ciudad_destino, area_destino, tiempo_alquiler, tipo_ticket, categoria_incidencia, items } = req.body;
+    
+    if (tipo_ticket === 'Alquiler' && (!items || items.length === 0)) {
         return res.status(400).json({ error: "Debe seleccionar al menos un equipo." });
     }
 
@@ -182,26 +182,30 @@ app.post('/api/tickets', (req, res) => {
     fechaVenc.setDate(fechaVenc.getDate() + diasAdd);
     const fechaVencStr = fechaVenc.toISOString().split('T')[0];
 
-    const sqlTicket = `INSERT INTO tickets (cliente_empresa, nit, direccion_entrega, horario_recepcion, persona_recibe, ciudad_destino, area_destino, tiempo_alquiler, estado_logistico, fecha_vencimiento) 
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, '1. Solicitado', ?)`;
+    const sqlTicket = `INSERT INTO tickets (cliente_empresa, nit, direccion_entrega, horario_recepcion, persona_recibe, ciudad_destino, area_destino, tiempo_alquiler, tipo_ticket, categoria_incidencia, estado_logistico, fecha_vencimiento) 
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '1. Solicitado', ?)`;
     
-    db.run(sqlTicket, [cliente_empresa, nit, direccion_entrega, horario_recepcion, persona_recibe, ciudad_destino, area_destino, tiempo_alquiler || '1 Mes', fechaVencStr], function(err) {
+    db.run(sqlTicket, [cliente_empresa, nit, direccion_entrega || 'N/A', horario_recepcion || 'N/A', persona_recibe || 'N/A', ciudad_destino || 'Bogotá', area_destino || 'General', tiempo_alquiler || '1 Mes', tipo_ticket || 'Alquiler', categoria_incidencia || 'N/A', fechaVencStr], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         const ticketId = this.lastID;
 
-        const stmt = db.prepare("INSERT INTO ticket_detalles (ticket_id, equipo_nombre, cantidad) VALUES (?, ?, ?)");
-        items.forEach(item => {
-            stmt.run([ticketId, item.equipo_nombre, item.cantidad]);
-        });
-        stmt.finalize(() => {
-            res.json({ message: "Solicitud creada exitosamente", id: ticketId });
-        });
+        if (items && items.length > 0) {
+            const stmt = db.prepare("INSERT INTO ticket_detalles (ticket_id, equipo_nombre, cantidad) VALUES (?, ?, ?)");
+            items.forEach(item => {
+                stmt.run([ticketId, item.equipo_nombre, item.cantidad]);
+            });
+            stmt.finalize(() => {
+                res.json({ message: "Solicitud creada exitosamente", id: ticketId });
+            });
+        } else {
+            res.json({ message: "Ticket de soporte creado exitosamente", id: ticketId });
+        }
     });
 });
 
 app.put('/api/tickets/:id', (req, res) => {
     const ticketId = req.params.id;
-    const { estado_logistico, asignado_a, comentario, admin_nombre } = req.body;
+    const { estado_logistico, asignado_a, comentario, autor_comentario, rol_autor } = req.body;
 
     const sqlUpdate = `UPDATE tickets SET 
         estado_logistico = COALESCE(?, estado_logistico), 
@@ -212,8 +216,8 @@ app.put('/api/tickets/:id', (req, res) => {
         if (err) return res.status(500).json({ error: err.message });
 
         if (comentario) {
-            db.run("INSERT INTO comentarios_tickets (ticket_id, autor, rol, comentario) VALUES (?, ?, 'Administrador', ?)",
-                [ticketId, admin_nombre || 'Soporte Logístico', comentario]);
+            db.run("INSERT INTO comentarios_tickets (ticket_id, autor, rol, comentario) VALUES (?, ?, ?, ?)",
+                [ticketId, autor_comentario || 'Usuario', rol_autor || 'Cliente', comentario]);
         }
         res.json({ message: "Actualizado correctamente" });
     });

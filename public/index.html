@@ -89,92 +89,157 @@
             <button class="btn btn-danger btn-sm" onclick="cerrarSesion()">Cerrar Sesión</button>
         </div>
 
-        <div class="row">
-            <div class="col-md-5 mb-4">
-                <div class="card p-4 shadow-sm border-0 bg-white">
-                    <h5 class="mb-3 fw-bold text-primary">Nueva Solicitud de Equipos</h5>
-                    <form id="formTicketCliente">
-                        <div class="mb-2">
-                            <label for="selectCiudadCliente" class="form-label small fw-bold">Ciudad de Destino:</label>
-                            <select id="selectCiudadCliente" class="form-select form-select-sm mb-2">
-                                <option value="Bogotá D.C.">Bogotá D.C.</option>
-                                <option value="Medellín">Medellín</option>
-                                <option value="Cali">Cali</option>
-                                <option value="Barranquilla">Barranquilla</option>
-                            </select>
+        <ul class="nav nav-tabs mb-3" id="clientTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold" id="alquiler-tab" data-bs-toggle="tab" data-bs-target="#alquilerContent" type="button">Solicitudes de Alquiler</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-danger" id="soporte-tab" data-bs-toggle="tab" data-bs-target="#soporteContent" type="button">Soporte e Incidencias 🛠️</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="clientTabsContent">
+            <!-- PESTAÑA ALQUILERES -->
+            <div class="tab-pane fade show active" id="alquilerContent" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-5 mb-4">
+                        <div class="card p-4 shadow-sm border-0 bg-white">
+                            <h5 class="mb-3 fw-bold text-primary">Nueva Solicitud de Equipos</h5>
+                            <form id="formTicketCliente">
+                                <input type="hidden" id="tipoTicketInput" value="Alquiler">
+                                <div class="mb-2">
+                                    <label for="selectCiudadCliente" class="form-label small fw-bold">Ciudad de Destino:</label>
+                                    <select id="selectCiudadCliente" class="form-select form-select-sm mb-2">
+                                        <option value="Bogotá D.C.">Bogotá D.C.</option>
+                                        <option value="Medellín">Medellín</option>
+                                        <option value="Cali">Cali</option>
+                                        <option value="Barranquilla">Barranquilla</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label for="inputDireccionEntrega" class="form-label small fw-bold">Dirección Exacta de Entrega:</label>
+                                    <input type="text" id="inputDireccionEntrega" class="form-control form-control-sm" placeholder="Ej: Calle 26 # 92-32 Bodega 4" required>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <label for="inputPersonaRecibe" class="form-label small fw-bold">Persona que Recibe:</label>
+                                        <input type="text" id="inputPersonaRecibe" class="form-control form-control-sm" placeholder="Nombre completo" required>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label for="inputHorario" class="form-label small fw-bold">Horario de Recepción:</label>
+                                        <input type="text" id="inputHorario" class="form-control form-control-sm" placeholder="Ej: 8:00 a.m. - 12:00 p.m." required>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <label for="inputAreaCliente" class="form-label small fw-bold">Área de la Empresa:</label>
+                                    <input type="text" id="inputAreaCliente" class="form-control form-control-sm" placeholder="Ej: Sistemas, Logística..." required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="selectTiempoAlquiler" class="form-label small fw-bold">Tiempo de Alquiler:</label>
+                                    <select id="selectTiempoAlquiler" class="form-select form-select-sm">
+                                        <option value="1 Mes">1 Mes</option>
+                                        <option value="3 Meses">3 Meses</option>
+                                        <option value="6 Meses">6 Meses</option>
+                                        <option value="1 Año">1 Año</option>
+                                        <option value="Indefinido / Soporte">Indefinido / Soporte</option>
+                                    </select>
+                                </div>
+
+                                <hr>
+                                <label class="form-label small fw-bold text-dark">Selecciona los equipos y cantidades:</label>
+                                <div id="listaCatalogoCheckboxes" class="mb-3 border p-2 rounded bg-light" style="max-height: 160px; overflow-y: auto;"></div>
+
+                                <button type="submit" class="btn btn-primary w-100 btn-sm fw-bold">Enviar Solicitud Logística</button>
+                            </form>
                         </div>
-                        <div class="mb-2">
-                            <label for="inputDireccionEntrega" class="form-label small fw-bold">Dirección Exacta de Entrega:</label>
-                            <input type="text" id="inputDireccionEntrega" class="form-control form-control-sm" placeholder="Ej: Calle 26 # 92-32 Bodega 4" required>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-2">
-                                <label for="inputPersonaRecibe" class="form-label small fw-bold">Persona que Recibe:</label>
-                                <input type="text" id="inputPersonaRecibe" class="form-control form-control-sm" placeholder="Nombre completo" required>
+                    </div>
+
+                    <div class="col-md-7">
+                        <div class="card p-4 shadow-sm border-0 bg-white mb-4">
+                            <h5 class="mb-3 fw-bold text-success">🟢 Solicitudes Activas</h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle small">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Destino / Dirección</th>
+                                            <th>Equipos y Plazo</th>
+                                            <th>Estado Logístico</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaMisTicketsActivos"></tbody>
+                                </table>
                             </div>
-                            <div class="col-md-6 mb-2">
-                                <label for="inputHorario" class="form-label small fw-bold">Horario de Recepción:</label>
-                                <input type="text" id="inputHorario" class="form-control form-control-sm" placeholder="Ej: 8:00 a.m. - 12:00 p.m." required>
-                            </div>
-                        </div>
-                        <div class="mb-2">
-                            <label for="inputAreaCliente" class="form-label small fw-bold">Área de la Empresa:</label>
-                            <input type="text" id="inputAreaCliente" class="form-control form-control-sm" placeholder="Ej: Sistemas, Logística..." required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="selectTiempoAlquiler" class="form-label small fw-bold">Tiempo de Alquiler:</label>
-                            <select id="selectTiempoAlquiler" class="form-select form-select-sm">
-                                <option value="1 Mes">1 Mes</option>
-                                <option value="3 Meses">3 Meses</option>
-                                <option value="6 Meses">6 Meses</option>
-                                <option value="1 Año">1 Año</option>
-                                <option value="Indefinido / Soporte">Indefinido / Soporte</option>
-                            </select>
                         </div>
 
-                        <hr>
-                        <label class="form-label small fw-bold text-dark">Selecciona los equipos y cantidades:</label>
-                        <div id="listaCatalogoCheckboxes" class="mb-3 border p-2 rounded bg-light" style="max-height: 160px; overflow-y: auto;"></div>
-
-                        <button type="submit" class="btn btn-primary w-100 btn-sm fw-bold">Enviar Solicitud Logística</button>
-                    </form>
+                        <div class="card p-4 shadow-sm border-0 bg-white">
+                            <h5 class="mb-3 fw-bold text-secondary">🔒 Historial de Tickets Cerrados</h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle small">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Destino / Dirección</th>
+                                            <th>Equipos y Plazo</th>
+                                            <th>Estado</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaMisTicketsCerrados"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="col-md-7">
-                <div class="card p-4 shadow-sm border-0 bg-white mb-4">
-                    <h5 class="mb-3 fw-bold text-success">🟢 Solicitudes Activas</h5>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle small">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>#</th>
-                                    <th>Destino / Dirección</th>
-                                    <th>Equipos y Plazo</th>
-                                    <th>Estado Logístico</th>
-                                    <th>Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tablaMisTicketsActivos"></tbody>
-                        </table>
+            <!-- PESTAÑA SOPORTE E INCIDENCIAS -->
+            <div class="tab-pane fade" id="soporteContent" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-5 mb-4">
+                        <div class="card p-4 shadow-sm border-0 bg-white">
+                            <h5 class="mb-3 fw-bold text-danger">🛠️ Reportar Incidencia o Soporte</h5>
+                            <form id="formTicketSoporte">
+                                <div class="mb-2">
+                                    <label for="selectCategoriaIncidencia" class="form-label small fw-bold">Tipo de Incidencia / Solicitud:</label>
+                                    <select id="selectCategoriaIncidencia" class="form-select form-select-sm mb-2">
+                                        <option value="Falla de equipo">Falla de equipo (Daño)</option>
+                                        <option value="Mantenimiento">Mantenimiento preventivo/correctivo</option>
+                                        <option value="Cambio de equipo">Cambio de equipo por garantía</option>
+                                        <option value="Recogida anticipada">Recogida anticipada</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label for="inputDetalleIncidencia" class="form-label small fw-bold">Descripción del Problema / Detalle:</label>
+                                    <textarea id="inputDetalleIncidencia" class="form-control form-control-sm" rows="3" placeholder="Describa la falla o requerimiento técnico..." required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="inputSerialAfectado" class="form-label small fw-bold">Serial del Equipo (Opcional):</label>
+                                    <input type="text" id="inputSerialAfectado" class="form-control form-control-sm" placeholder="Ej: DL-784201">
+                                </div>
+                                <button type="submit" class="btn btn-danger w-100 btn-sm fw-bold">Enviar Reporte de Soporte</button>
+                            </form>
+                        </div>
                     </div>
-                </div>
 
-                <div class="card p-4 shadow-sm border-0 bg-white">
-                    <h5 class="mb-3 fw-bold text-secondary">🔒 Historial de Tickets Cerrados</h5>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle small">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>#</th>
-                                    <th>Destino / Dirección</th>
-                                    <th>Equipos y Plazo</th>
-                                    <th>Estado</th>
-                                    <th>Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tablaMisTicketsCerrados"></tbody>
-                        </table>
+                    <div class="col-md-7">
+                        <div class="card p-4 shadow-sm border-0 bg-white">
+                            <h5 class="mb-3 fw-bold text-dark">📋 Mis Reportes de Soporte Activos</h5>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle small">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Categoría / Detalle</th>
+                                            <th>Estado</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaMisTicketsSoporte"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -186,7 +251,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4 bg-dark text-white p-3 rounded shadow-sm">
             <div>
                 <h4 class="mb-0 fw-bold">Panel de Administración Logística</h4>
-                <small class="text-white-50">Control de entregas, inventario y seriales</small>
+                <small class="text-white-50">Control de entregas, inventario y soporte técnico</small>
             </div>
             <button class="btn btn-outline-light btn-sm" onclick="cerrarSesion()">Cerrar Sesión</button>
         </div>
@@ -196,6 +261,9 @@
                 <button class="nav-link active fw-bold" id="tickets-tab" data-bs-toggle="tab" data-bs-target="#ticketsContent" type="button">Gestión de Solicitudes</button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-danger" id="admin-soporte-tab" data-bs-toggle="tab" data-bs-target="#adminSoporteContent" type="button" onclick="cargarAdminSoporte()">Tickets de Soporte 🛠️</button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link fw-bold" id="inventario-tab" data-bs-toggle="tab" data-bs-target="#inventarioContent" type="button" onclick="cargarInventarioAdmin()">Inventario y Seriales</button>
             </li>
         </ul>
@@ -203,7 +271,7 @@
         <div class="tab-content" id="adminTabsContent">
             <div class="tab-pane fade show active" id="ticketsContent" role="tabpanel">
                 <div class="card p-4 shadow-sm border-0 bg-white mb-4">
-                    <h5 class="mb-3 fw-bold text-success">🟢 Solicitudes Activas en Proceso</h5>
+                    <h5 class="mb-3 fw-bold text-success">🟢 Solicitudes Activas de Alquiler</h5>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle small">
                             <thead class="table-dark">
@@ -236,6 +304,27 @@
                                 </tr>
                             </thead>
                             <tbody id="tablaAdminTicketsCerrados"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA ADMIN SOPORTE -->
+            <div class="tab-pane fade" id="adminSoporteContent" role="tabpanel">
+                <div class="card p-4 shadow-sm border-0 bg-white">
+                    <h5 class="mb-3 fw-bold text-danger">🛠️ Reportes de Soporte Técnico e Incidencias</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle small">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Empresa / Categoría</th>
+                                    <th>Descripción / Detalle</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaAdminSoporte"></tbody>
                         </table>
                     </div>
                 </div>
@@ -275,11 +364,10 @@
                     <input type="hidden" id="modalTicketId">
                     <div id="historialComentarios" class="border p-3 mb-3 rounded bg-light" style="max-height: 250px; overflow-y: auto;"></div>
                     
-                    <div id="seccionNuevoComentario" class="d-none">
+                    <div id="seccionNuevoComentario" class="">
                         <label for="textoComentarioAdmin" class="form-label small fw-bold">Escribe un comentario o novedad:</label>
-                        <textarea id="textoComentarioAdmin" class="form-control form-control-sm mb-2" rows="2" placeholder="Novedad logística..."></textarea>
-                        <!-- IMPORTANTE: type="button" añadido para prevenir el cierre de sesión -->
-                        <button type="button" class="btn btn-success btn-sm px-4" onclick="enviarComentarioAdmin()">Agregar Comentario</button>
+                        <textarea id="textoComentarioAdmin" class="form-control form-control-sm mb-2" rows="2" placeholder="Novedad o respuesta..."></textarea>
+                        <button type="button" class="btn btn-success btn-sm px-4" onclick="enviarComentarioTicket()">Agregar Comentario</button>
                     </div>
                 </div>
             </div>
@@ -410,6 +498,7 @@
                 ciudad_destino: document.getElementById('selectCiudadCliente').value,
                 area_destino: document.getElementById('inputAreaCliente').value,
                 tiempo_alquiler: document.getElementById('selectTiempoAlquiler').value,
+                tipo_ticket: 'Alquiler',
                 items: items
             };
 
@@ -429,21 +518,66 @@
             }
         });
 
+        document.getElementById('formTicketSoporte').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const categoria = document.getElementById('selectCategoriaIncidencia').value;
+            const detalle = document.getElementById('inputDetalleIncidencia').value;
+            const serial = document.getElementById('inputSerialAfectado').value;
+
+            const datos = {
+                cliente_empresa: usuarioActual.usuario,
+                nit: usuarioActual.nit || 'NIT Pendiente',
+                direccion_entrega: usuarioActual.direccion || 'Sede Principal',
+                ciudad_destino: 'Bogotá',
+                area_destino: 'Soporte Técnico',
+                tipo_ticket: 'Soporte',
+                categoria_incidencia: categoria,
+                items: serial ? [{ equipo_nombre: `Serial: ${serial} - ${detalle}`, cantidad: 1 }] : [{ equipo_nombre: detalle, cantidad: 1 }]
+            };
+
+            const res = await fetch('/api/tickets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+
+            if (res.ok) {
+                alert('Reporte de soporte enviado exitosamente.');
+                document.getElementById('inputDetalleIncidencia').value = '';
+                document.getElementById('inputSerialAfectado').value = '';
+                cargarMisTickets();
+            }
+        });
+
         async function cargarMisTickets() {
             const res = await fetch(`/api/tickets?empresa=${encodeURIComponent(usuarioActual.usuario)}`);
             const tickets = await res.json();
             
             const activosTbody = document.getElementById('tablaMisTicketsActivos');
             const cerradosTbody = document.getElementById('tablaMisTicketsCerrados');
+            const soporteTbody = document.getElementById('tablaMisTicketsSoporte');
 
-            const activos = tickets.filter(t => t.estado_logistico !== '8. Cerrado');
-            const cerrados = tickets.filter(t => t.estado_logistico === '8. Cerrado');
+            const alquilados = tickets.filter(t => t.tipo_ticket !== 'Soporte');
+            const soportes = tickets.filter(t => t.tipo_ticket === 'Soporte');
+
+            const activos = alquilados.filter(t => t.estado_logistico !== '8. Cerrado');
+            const cerrados = alquilados.filter(t => t.estado_logistico === '8. Cerrado');
 
             activosTbody.innerHTML = activos.length === 0 ? '<tr><td colspan="5" class="text-center text-muted">No hay solicitudes activas.</td></tr>' :
                 activos.map(t => renderFilaTicketCliente(t)).join('');
 
             cerradosTbody.innerHTML = cerrados.length === 0 ? '<tr><td colspan="5" class="text-center text-muted">No hay tickets cerrados.</td></tr>' :
                 cerrados.map(t => renderFilaTicketCliente(t)).join('');
+
+            soporteTbody.innerHTML = soportes.length === 0 ? '<tr><td colspan="4" class="text-center text-muted">No hay reportes de soporte.</td></tr>' :
+                soportes.map(t => `
+                    <tr>
+                        <td>#SPT-2026-${String(t.id).padStart(4, '0')}</td>
+                        <td><b>${t.categoria_incidencia}</b><br><small class="text-muted">${t.detalles[0]?.equipo_nombre || ''}</small></td>
+                        <td><span class="badge bg-warning text-dark">${t.estado_logistico}</span></td>
+                        <td><button type="button" class="btn btn-sm btn-outline-primary py-0" onclick="verDetalleTicket(${t.id})">Abrir Chat</button></td>
+                    </tr>
+                `).join('');
         }
 
         function renderFilaTicketCliente(t) {
@@ -470,7 +604,7 @@
                     <td><b>Dir:</b> ${t.direccion_entrega}<br><small class="text-muted">👤 Recibe: ${t.persona_recibe || 'N/A'}</small></td>
                     <td>${listaEquipos}<br><span class="badge bg-light text-dark border mt-1">⏱️ ${t.tiempo_alquiler}</span>${alertaVenc}</td>
                     <td><span class="badge bg-success">${t.estado_logistico}</span></td>
-                    <td><button class="btn btn-sm btn-outline-primary py-0" onclick="verDetalleTicket(${t.id}, false)">Ver Línea de Tiempo</button></td>
+                    <td><button type="button" class="btn btn-sm btn-outline-primary py-0" onclick="verDetalleTicket(${t.id})">Ver Chat</button></td>
                 </tr>
             `;
         }
@@ -482,14 +616,40 @@
             const activosTbody = document.getElementById('tablaAdminTicketsActivos');
             const cerradosTbody = document.getElementById('tablaAdminTicketsCerrados');
 
-            const activos = tickets.filter(t => t.estado_logistico !== '8. Cerrado');
-            const cerrados = tickets.filter(t => t.estado_logistico === '8. Cerrado');
+            const alquilados = tickets.filter(t => t.tipo_ticket !== 'Soporte');
+            const activos = alquilados.filter(t => t.estado_logistico !== '8. Cerrado');
+            const cerrados = alquilados.filter(t => t.estado_logistico === '8. Cerrado');
 
             activosTbody.innerHTML = activos.length === 0 ? '<tr><td colspan="6" class="text-center text-muted">No hay solicitudes activas.</td></tr>' :
                 activos.map(t => renderFilaTicketAdmin(t)).join('');
 
             cerradosTbody.innerHTML = cerrados.length === 0 ? '<tr><td colspan="6" class="text-center text-muted">No hay tickets cerrados.</td></tr>' :
                 cerrados.map(t => renderFilaTicketAdmin(t)).join('');
+        }
+
+        async function cargarAdminSoporte() {
+            const res = await fetch('/api/tickets');
+            const tickets = await res.json();
+            const soporteTbody = document.getElementById('tablaAdminSoporte');
+            const soportes = tickets.filter(t => t.tipo_ticket === 'Soporte');
+
+            soporteTbody.innerHTML = soportes.length === 0 ? '<tr><td colspan="5" class="text-center text-muted">No hay reportes de soporte técnicos.</td></tr>' :
+                soportes.map(t => `
+                    <tr>
+                        <td>#SPT-2026-${String(t.id).padStart(4, '0')}</td>
+                        <td><b>${t.cliente_empresa}</b><br><span class="badge bg-danger">${t.categoria_incidencia}</span></td>
+                        <td>${t.detalles[0]?.equipo_nombre || 'Sin detalle'}</td>
+                        <td>
+                            <select class="form-select form-select-sm fw-bold text-danger" onchange="actualizarEstado(${t.id}, this.value)">
+                                <option value="1. Solicitado" ${t.estado_logistico === '1. Solicitado' ? 'selected' : ''}>1. Solicitado</option>
+                                <option value="En Revisión" ${t.estado_logistico === 'En Revisión' ? 'selected' : ''}>En Revisión</option>
+                                <option value="En Proceso" ${t.estado_logistico === 'En Proceso' ? 'selected' : ''}>En Proceso</option>
+                                <option value="8. Cerrado" ${t.estado_logistico === '8. Cerrado' ? 'selected' : ''}>🔒 8. Cerrado</option>
+                            </select>
+                        </td>
+                        <td><button type="button" class="btn btn-sm btn-dark py-0" onclick="verDetalleTicket(${t.id})">Gestionar Chat</button></td>
+                    </tr>
+                `).join('');
         }
 
         function renderFilaTicketAdmin(t) {
@@ -535,7 +695,7 @@
                         </select>
                     </td>
                     <td>
-                        <button class="btn btn-sm btn-dark py-0 mb-1" onclick="verDetalleTicket(${t.id}, true)">Comentarios</button>
+                        <button type="button" class="btn btn-sm btn-dark py-0 mb-1" onclick="verDetalleTicket(${t.id})">Chat</button>
                     </td>
                 </tr>
             `;
@@ -562,7 +722,10 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ estado_logistico: nuevoEstado })
             });
-            cargarAdminTickets();
+            if (usuarioActual.rol === 'admin') {
+                cargarAdminTickets();
+                cargarAdminSoporte();
+            }
         }
 
         async function actualizarAsignacion(id, operador) {
@@ -573,13 +736,13 @@
             });
         }
 
-        async function verDetalleTicket(id, esAdmin) {
+        async function verDetalleTicket(id) {
             document.getElementById('modalTicketId').value = id;
-            document.getElementById('seccionNuevoComentario').classList.remove('d-none');
-
             const res = await fetch(`/api/tickets/${id}/detalle`);
             const data = await res.json();
-            document.getElementById('modalTitulo').innerText = `Trazabilidad Ticket #TKT-2026-${String(data.ticket.id).padStart(4, '0')} - ${data.ticket.cliente_empresa}`;
+            
+            const prefijo = data.ticket.tipo_ticket === 'Soporte' ? 'SPT' : 'TKT';
+            document.getElementById('modalTitulo').innerText = `Historial #${prefijo}-2026-${String(data.ticket.id).padStart(4, '0')} - ${data.ticket.cliente_empresa}`;
 
             const histDiv = document.getElementById('historialComentarios');
             if (data.comentarios.length === 0) {
@@ -597,22 +760,23 @@
             new bootstrap.Modal(document.getElementById('modalTrazabilidad')).show();
         }
 
-        async function enviarComentarioAdmin() {
+        async function enviarComentarioTicket() {
             const id = document.getElementById('modalTicketId').value;
             const comentario = document.getElementById('textoComentarioAdmin').value;
             if (!comentario) return;
 
-            const autorNombre = usuarioActual.rol === 'admin' ? "Supervisor Logística" : usuarioActual.usuario;
+            const autorNombre = usuarioActual.rol === 'admin' ? "Soporte Logístico" : usuarioActual.usuario;
+            const rolAutor = usuarioActual.rol === 'admin' ? "Administrador" : "Cliente";
 
             const res = await fetch(`/api/tickets/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ comentario, admin_nombre: autorNombre })
+                body: JSON.stringify({ comentario, autor_comentario: autorNombre, rol_autor: rolAutor })
             });
 
             if (res.ok) {
                 document.getElementById('textoComentarioAdmin').value = '';
-                verDetalleTicket(id, true);
+                verDetalleTicket(id);
             }
         }
     </script>
