@@ -3,143 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrackExpress - Portal Logístico</title>
+    <title>TrackExpress - Portal Logístico de Equipos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous"/>
     <style>
-        .tracker-step {
-            font-size: 0.85rem;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-        #mapa-seguimiento {
-            height: 300px;
-            border-radius: 10px;
-            width: 100%;
+        body { background-color: #f8f9fa; }
+        .login-card {
+            max-width: 450px;
+            margin: 80px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
     </style>
 </head>
-<body class="bg-light">
+<body>
 
-    <!-- LOGIN -->
-    <div id="auth-section" class="container mt-5" style="max-width: 400px;">
-        <div class="card shadow p-4">
-            <h3 class="text-center mb-3">TrackExpress 🚚</h3>
-            <p class="text-muted text-center small">Portal Logístico de Equipos</p>
-            <div class="mb-3">
-                <label for="login-user" class="form-label">Usuario / Empresa</label>
-                <input type="text" id="login-user" class="form-control" aria-label="Usuario">
+    <!-- 1. LOGIN -->
+    <div id="auth-container" class="container">
+        <div class="login-card">
+            <div class="text-center mb-4">
+                <h2 class="fw-bold">TrackExpress 🚚</h2>
+                <p class="text-muted small">Portal Logístico de Equipos</p>
             </div>
-            <div class="mb-3">
-                <label for="login-pass" class="form-label">Contraseña</label>
-                <input type="password" id="login-pass" class="form-control" aria-label="Contraseña">
-            </div>
-            <button onclick="login()" class="btn btn-primary w-100 mb-2">Ingresar</button>
-            <button onclick="registrar()" class="btn btn-outline-secondary w-100">Registrarse</button>
+            
+            <form id="formLogin">
+                <div class="mb-3">
+                    <label for="loginUser" class="form-label small fw-bold">Usuario / Empresa</label>
+                    <input type="text" id="loginUser" name="loginUser" class="form-control" placeholder="Ej: corferias o admin" required>
+                </div>
+                <div class="mb-3">
+                    <label for="loginPass" class="form-label small fw-bold">Contraseña</label>
+                    <input type="password" id="loginPass" name="loginPass" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 mb-2 fw-bold">Ingresar</button>
+                <button type="button" class="btn btn-outline-secondary w-100 btn-sm" onclick="mostrarRegistro(true)">Registrarse como Cliente</button>
+            </form>
+
+            <form id="formRegistro" class="d-none">
+                <div class="mb-3">
+                    <label for="regUser" class="form-label small fw-bold">Nombre de Empresa / Usuario</label>
+                    <input type="text" id="regUser" name="regUser" class="form-control" placeholder="Nombre de tu empresa" required>
+                </div>
+                <div class="mb-3">
+                    <label for="regPass" class="form-label small fw-bold">Contraseña</label>
+                    <input type="password" id="regPass" name="regPass" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100 mb-2 fw-bold">Crear Cuenta</button>
+                <button type="button" class="btn btn-link w-100 text-decoration-none btn-sm" onclick="mostrarRegistro(false)">← Volver al login</button>
+            </form>
         </div>
     </div>
 
-    <!-- PANEL DE ADMINISTRADOR -->
-    <div id="admin-section" class="container-fluid mt-4 px-4" style="display: none;">
-        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
-            <h2>🛠️ Panel de Control - Administrador Logístico</h2>
+    <!-- 2. DASHBOARD CLIENTE -->
+    <div id="cliente-dashboard" class="container my-5 d-none">
+        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm border">
             <div>
-                <span id="admin-info" class="me-3 fw-bold text-primary"></span>
-                <button onclick="logout()" class="btn btn-danger btn-sm">Cerrar Sesión</button>
+                <h4 class="mb-0 text-success fw-bold" id="tituloCliente">Portal de Seguimiento</h4>
             </div>
+            <button class="btn btn-danger btn-sm" onclick="cerrarSesion()">Cerrar Sesión</button>
         </div>
 
         <div class="row">
-            <div class="col-lg-4 mb-4">
-                <div class="card shadow p-3">
-                    <h5 class="text-primary mb-3">📦 Registrar / Asignar Equipo</h5>
-                    <div class="mb-2">
-                        <label for="eq-nombre" class="form-label small text-muted">Equipo</label>
-                        <select id="eq-nombre" class="form-select" aria-label="Equipo">
-                            <option value="Laptop Dell Latitude">Laptop Dell Latitude</option>
-                            <option value="Radio Comunicador Motorola">Radio Comunicador Motorola</option>
-                            <option value="Tablet de Registro">Tablet de Registro</option>
-                            <option value="Proyector Epson Full HD">Proyector Epson Full HD</option>
-                            <option value="Terminal POS Portátil">Terminal POS Portátil</option>
-                        </select>
-                    </div>
+            <div class="col-md-5 mb-4">
+                <div class="card p-4 shadow-sm border-0 bg-white">
+                    <h5 class="mb-3 fw-bold text-primary">Solicitud Múltiple de Equipos</h5>
+                    <form id="formTicketCliente">
+                        <div class="mb-2">
+                            <label for="selectCiudadCliente" class="form-label small fw-bold">Ciudad de Destino:</label>
+                            <select id="selectCiudadCliente" name="selectCiudadCliente" class="form-select form-select-sm mb-2">
+                                <option value="Bogotá D.C.">Bogotá D.C.</option>
+                                <option value="Medellín">Medellín</option>
+                                <option value="Cali">Cali</option>
+                                <option value="Barranquilla">Barranquilla</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label for="inputAreaCliente" class="form-label small fw-bold">Área de la Empresa:</label>
+                            <input type="text" id="inputAreaCliente" name="inputAreaCliente" class="form-control form-control-sm" placeholder="Ej: Área de Sistemas, Logística..." required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="selectTiempoAlquiler" class="form-label small fw-bold">Tiempo de Alquiler:</label>
+                            <select id="selectTiempoAlquiler" name="selectTiempoAlquiler" class="form-select form-select-sm">
+                                <option value="1 Mes">1 Mes</option>
+                                <option value="3 Meses">3 Meses</option>
+                                <option value="6 Meses">6 Meses</option>
+                                <option value="1 Año">1 Año</option>
+                                <option value="Indefinido / Soporte">Indefinido / Soporte</option>
+                            </select>
+                        </div>
 
-                    <div class="mb-2">
-                        <label for="eq-codigo" class="form-label small text-muted">Código ID</label>
-                        <input type="text" id="eq-codigo" placeholder="Ej: EQ-BOG-01" class="form-control" aria-label="Código ID">
-                    </div>
+                        <hr>
+                        <label class="form-label small fw-bold text-dark">Selecciona los equipos y cantidades requeridas:</label>
+                        <div id="listaCatalogoCheckboxes" class="mb-3 border p-2 rounded bg-light" style="max-height: 180px; overflow-y: auto;">
+                            <!-- Se llena dinámicamente con checkboxes -->
+                        </div>
 
-                    <div class="mb-2">
-                        <label for="eq-ciudad" class="form-label small text-muted">Ciudad de Destino</label>
-                        <select id="eq-ciudad" class="form-select" aria-label="Ciudad de Destino">
-                            <option value="Bogotá D.C.">Bogotá D.C.</option>
-                            <option value="Medellín">Medellín</option>
-                            <option value="Cali">Cali</option>
-                            <option value="Barranquilla">Barranquilla</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-2">
-                        <label for="eq-estado" class="form-label small text-muted">Estado Inicial</label>
-                        <select id="eq-estado" class="form-select" aria-label="Estado">
-                            <option value="1. Solicitud Recibida">1. Solicitud Recibida</option>
-                            <option value="2. En Preparación / Bodega">2. En Preparación / Bodega</option>
-                            <option value="3. En Tránsito / Alquilado">3. En Tránsito / Alquilado</option>
-                            <option value="4. Entregado al Cliente">4. Entregado al Cliente</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-2">
-                        <label for="eq-localizador" class="form-label small text-muted">GPS / Dirección</label>
-                        <input type="text" id="eq-localizador" placeholder="Ej: Calle 100 #15-20" class="form-control" aria-label="GPS">
-                    </div>
-
-                    <div class="mb-2">
-                        <label for="eq-empresa" class="form-label small text-muted">Empresa Cliente</label>
-                        <select id="eq-empresa" class="form-select" aria-label="Empresa Cliente">
-                            <option value="Corferias">Corferias</option>
-                            <option value="Ecopetrol">Ecopetrol</option>
-                            <option value="Grupo Éxito">Grupo Éxito</option>
-                            <option value="Bancolombia">Bancolombia</option>
-                            <option value="Avianca">Avianca</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-2">
-                        <label for="eq-area" class="form-label small text-muted">Área</label>
-                        <select id="eq-area" class="form-select" aria-label="Área">
-                            <option value="Área IT">Área IT</option>
-                            <option value="Recursos Humanos">Recursos Humanos</option>
-                            <option value="Seguridad">Seguridad</option>
-                            <option value="Reservas">Reservas</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-2">
-                        <label for="eq-tiempo" class="form-label small text-muted">Tiempo de Alquiler</label>
-                        <input type="text" id="eq-tiempo" placeholder="Ej: 3 meses" class="form-control" aria-label="Tiempo">
-                    </div>
-
-                    <button onclick="guardarEquipo()" class="btn btn-success w-100 mt-3">🚀 Guardar en Base de Datos</button>
+                        <button type="submit" class="btn btn-primary w-100 btn-sm fw-bold">Generar Solicitud con Equipos</button>
+                    </form>
                 </div>
             </div>
 
-            <div class="col-lg-8">
-                <div class="card shadow p-3">
-                    <h5 class="text-secondary mb-3">📍 Monitoreo General y Actualización de Envíos</h5>
+            <div class="col-md-7">
+                <!-- Tabla Activos -->
+                <div class="card p-4 shadow-sm border-0 bg-white mb-4">
+                    <h5 class="mb-3 fw-bold text-success">🟢 Solicitudes Activas</h5>
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-dark">
+                        <table class="table table-hover align-middle small">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Código</th>
-                                    <th>Equipo & Empresa</th>
-                                    <th>Ciudad & GPS</th>
-                                    <th>Cambiar Estado en Vivo</th>
-                                    <th>Acciones</th>
+                                    <th>#</th>
+                                    <th>Área / Ciudad</th>
+                                    <th>Equipos y Tiempo</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
                                 </tr>
                             </thead>
-                            <tbody id="tabla-admin"></tbody>
+                            <tbody id="tablaMisTicketsActivos"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tabla Cerrados -->
+                <div class="card p-4 shadow-sm border-0 bg-white">
+                    <h5 class="mb-3 fw-bold text-secondary">🔒 Historial de Tickets Cerrados</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Área / Ciudad</th>
+                                    <th>Equipos y Tiempo</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaMisTicketsCerrados"></tbody>
                         </table>
                     </div>
                 </div>
@@ -147,260 +146,347 @@
         </div>
     </div>
 
-    <!-- PANEL DE CLIENTE EXTERNO -->
-    <div id="client-section" class="container mt-4" style="display: none;">
-        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
-            <h2>🏢 Portal de Seguimiento - Cliente: <span id="client-name" class="text-success"></span></h2>
-            <button onclick="logout()" class="btn btn-danger btn-sm">Cerrar Sesión</button>
+    <!-- 3. PANEL DE ADMINISTRADOR -->
+    <div id="admin-dashboard" class="container my-5 d-none">
+        <div class="d-flex justify-content-between align-items-center mb-4 bg-dark text-white p-3 rounded shadow-sm">
+            <div>
+                <h4 class="mb-0 fw-bold">Panel de Administración Logística</h4>
+                <small class="text-white-50">Control de equipos activos y tickets cerrados</small>
+            </div>
+            <button class="btn btn-outline-light btn-sm" onclick="cerrarSesion()">Cerrar Sesión</button>
         </div>
 
-        <div class="row">
-            <div class="col-lg-7 mb-4">
-                <div class="card shadow p-3">
-                    <h5 class="text-primary mb-3">📦 Mis Equipos Alquilados y Estado en Vivo</h5>
-                    <div class="table-responsive">
-                        <table class="table table-striped align-middle">
-                            <thead class="table-primary">
-                                <tr>
-                                    <th>Código</th>
-                                    <th>Equipo</th>
-                                    <th>Ciudad</th>
-                                    <th>Estado del Envío</th>
-                                    <th>Tiempo</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabla-cliente"></tbody>
-                        </table>
-                    </div>
-                </div>
+        <!-- Gestión Activos -->
+        <div class="card p-4 shadow-sm border-0 bg-white mb-4">
+            <h5 class="mb-3 fw-bold text-success">🟢 Solicitudes Activas en Proceso</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle small">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Empresa / Área</th>
+                            <th>Equipos y Tiempo</th>
+                            <th>Operador</th>
+                            <th>Estado del Ticket</th>
+                            <th>Comentarios</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaAdminTicketsActivos"></tbody>
+                </table>
             </div>
+        </div>
 
-            <div class="col-lg-5 mb-4">
-                <div class="card shadow p-3">
-                    <h5 class="text-success mb-3">🗺️ Mapa de Localización en Vivo</h5>
-                    <div id="mapa-seguimiento" class="mb-3 border"></div>
-                    <div id="detalle-gps" class="alert alert-secondary small mb-0">
-                        Selecciona un equipo para ver su ubicación exacta.
+        <!-- Gestión Cerrados -->
+        <div class="card p-4 shadow-sm border-0 bg-white">
+            <h5 class="mb-3 fw-bold text-secondary">🔒 Historial de Tickets Cerrados</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle small">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>#</th>
+                            <th>Empresa / Área</th>
+                            <th>Equipos y Tiempo</th>
+                            <th>Operador Asignado</th>
+                            <th>Estado</th>
+                            <th>Comentarios</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaAdminTicketsCerrados"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE COMENTARIOS Y TRAZABILIDAD -->
+    <div class="modal fade" id="modalTrazabilidad" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalTitulo">Historial y Comentarios</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="modalTicketId">
+                    <div id="historialComentarios" class="border p-3 mb-3 rounded bg-light" style="max-height: 250px; overflow-y: auto;"></div>
+                    
+                    <div id="seccionNuevoComentario" class="d-none">
+                        <label for="textoComentarioAdmin" class="form-label small fw-bold">Escribe un comentario o novedad para la empresa:</label>
+                        <textarea id="textoComentarioAdmin" name="textoComentarioAdmin" class="form-control form-control-sm mb-2" rows="2" placeholder="Escribe un comentario..."></textarea>
+                        <button class="btn btn-success btn-sm px-4" onclick="enviarComentarioAdmin()">Agregar Comentario</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
     <script>
-        let mapa = null;
-        let marcador = null;
+        let usuarioActual = null;
+        const operadoresLogistica = ['Carlos Pérez', 'Andrés Gómez', 'Diana Rodríguez', 'Luis Torres', 'Sharon Quintero'];
 
-        async function registrar() {
-            const username = document.getElementById('login-user').value;
-            const password = document.getElementById('login-pass').value;
-            const res = await fetch('/api/registro', {
+        function mostrarRegistro(mostrar) {
+            if (mostrar) {
+                document.getElementById('formLogin').classList.add('d-none');
+                document.getElementById('formRegistro').classList.remove('d-none');
+            } else {
+                document.getElementById('formRegistro').classList.add('d-none');
+                document.getElementById('formLogin').classList.remove('d-none');
+            }
+        }
+
+        document.getElementById('formLogin').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const usuario = document.getElementById('loginUser').value;
+            const password = document.getElementById('loginPass').value;
+
+            const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password, rol: username.toLowerCase() === 'admin' ? 'admin' : 'cliente' })
+                body: JSON.stringify({ usuario, password })
             });
             const data = await res.json();
-            if (data.success) {
-                alert('¡Registro exitoso! Ya puedes iniciar sesión.');
+
+            if (res.ok) {
+                usuarioActual = data.usuario;
+                document.getElementById('auth-container').classList.add('d-none');
+
+                if (usuarioActual.rol === 'admin') {
+                    document.getElementById('admin-dashboard').classList.remove('d-none');
+                    cargarAdminTickets();
+                } else {
+                    document.getElementById('cliente-dashboard').classList.remove('d-none');
+                    document.getElementById('tituloCliente').innerText = `Portal de Seguimiento - Cliente: ${usuarioActual.usuario}`;
+                    cargarCatalogoCheckboxes();
+                    cargarMisTickets();
+                }
             } else {
                 alert(data.error);
             }
-        }
+        });
 
-        async function login() {
-            const username = document.getElementById('login-user').value;
-            const password = document.getElementById('login-pass').value;
-            const res = await fetch('/api/login', {
+        document.getElementById('formRegistro').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const usuario = document.getElementById('regUser').value;
+            const password = document.getElementById('regPass').value;
+
+            const res = await fetch('/api/auth/registro', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ usuario, password })
             });
             const data = await res.json();
-            if (data.success) {
-                document.getElementById('auth-section').style.display = 'none';
 
-                if (data.rol === 'admin') {
-                    document.getElementById('admin-section').style.display = 'block';
-                    document.getElementById('admin-info').innerText = `👤 Admin: ${data.username}`;
-                    cargarEquiposAdmin();
-                } else {
-                    document.getElementById('client-section').style.display = 'block';
-                    document.getElementById('client-name').innerText = data.username;
-                    cargarEquiposCliente(data.username);
-
-                    setTimeout(() => {
-                        inicializarMapa(4.60971, -74.08175, 'Bogotá D.C. - Bodega Central');
-                    }, 300);
-                }
+            if (res.ok) {
+                alert('¡Cuenta creada con éxito! Ahora inicia sesión.');
+                document.getElementById('formRegistro').reset();
+                mostrarRegistro(false);
             } else {
-                alert('Credenciales incorrectas');
+                alert(data.error);
             }
+        });
+
+        function cerrarSesion() {
+            usuarioActual = null;
+            document.getElementById('admin-dashboard').classList.add('d-none');
+            document.getElementById('cliente-dashboard').classList.add('d-none');
+            document.getElementById('auth-container').classList.remove('d-none');
+            document.getElementById('formLogin').reset();
         }
 
-        function logout() { 
-            location.reload(); 
-        }
-
-        function inicializarMapa(lat, lon, descripcion) {
-            if (!mapa) {
-                mapa = L.map('mapa-seguimiento').setView([lat, lon], 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '© OpenStreetMap'
-                }).addTo(mapa);
-            } else {
-                mapa.setView([lat, lon], 13);
-            }
-
-            if (marcador) {
-                mapa.removeLayer(marcador);
-            }
-            marcador = L.marker([lat, lon]).addTo(mapa)
-                .bindPopup(`<b>Ubicación GPS:</b><br>${descripcion}`)
-                .openPopup();
-        }
-
-        async function cargarEquiposAdmin() {
-            const res = await fetch('/api/equipos');
+        async function cargarCatalogoCheckboxes() {
+            const res = await fetch('/api/catalogo');
             const equipos = await res.json();
-            const tbody = document.getElementById('tabla-admin');
-            tbody.innerHTML = '';
-            
-            equipos.forEach(eq => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${eq.codigo}</strong></td>
-                        <td>${eq.nombre}<br><small class="text-muted">🏢 ${eq.empresa}</small></td>
-                        <td>🌍 ${eq.ciudad || 'Bogotá D.C.'}<br><small>📍 ${eq.localizador}</small></td>
-                        <td>
-                            <select id="estado-${eq.id}" class="form-select form-select-sm mb-1" aria-label="Cambiar estado">
-                                <option value="1. Solicitud Recibida" ${eq.estado === '1. Solicitud Recibida' ? 'selected' : ''}>1. Solicitud Recibida</option>
-                                <option value="2. En Preparación / Bodega" ${eq.estado === '2. En Preparación / Bodega' ? 'selected' : ''}>2. En Preparación / Bodega</option>
-                                <option value="3. En Tránsito / Alquilado" ${eq.estado === '3. En Tránsito / Alquilado' ? 'selected' : ''}>3. En Tránsito / Alquilado</option>
-                                <option value="4. Entregado al Cliente" ${eq.estado === '4. Entregado al Cliente' ? 'selected' : ''}>4. Entregado al Cliente</option>
-                            </select>
-                            <input type="text" id="loc-${eq.id}" class="form-control form-control-sm" value="${eq.localizador || ''}" placeholder="Actualizar GPS" aria-label="Actualizar GPS">
-                        </td>
-                        <td>
-                            <button onclick="actualizarEstado(${eq.id})" class="btn btn-outline-primary btn-sm mb-1 w-100">Actualizar</button>
-                            <button onclick="liberarEquipo(${eq.id})" class="btn btn-outline-success btn-sm w-100">Finalizar</button>
-                        </td>
-                    </tr>
-                `;
-            });
+            const contenedor = document.getElementById('listaCatalogoCheckboxes');
+            contenedor.innerHTML = equipos.map((eq, index) => `
+                <div class="form-check mb-2 border-bottom pb-1">
+                    <input class="form-check-input equipo-check" type="checkbox" value="${eq.nombre}" id="eq_${index}" name="equipo_opcion_${index}">
+                    <label class="form-check-label small fw-bold text-dark" for="eq_${index}">
+                        ${eq.nombre} <span class="text-muted fw-normal">(${eq.caracteristicas})</span>
+                    </label>
+                    <div class="input-group input-group-sm mt-1 w-50">
+                        <span class="input-group-text" id="label_cant_${index}">Cant:</span>
+                        <input type="number" class="form-control form-control-sm cantidad-equipo" value="1" min="1" id="cant_${index}" name="cant_${index}" aria-describedby="label_cant_${index}">
+                    </div>
+                </div>
+            `).join('');
         }
 
-        async function actualizarEstado(id) {
-            const nuevoEstado = document.getElementById(`estado-${id}`).value;
-            const nuevoLocalizador = document.getElementById(`loc-${id}`).value;
-
-            const res = await fetch(`/api/equipos/${id}/estado`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ estado: nuevoEstado, localizador: nuevoLocalizador })
-            });
-            const result = await res.json();
-            if (result.success) {
-                alert('¡Estado y ubicación actualizados con éxito!');
-                cargarEquiposAdmin();
-            } else {
-                alert('Error al actualizar');
-            }
-        }
-
-        async function cargarEquiposCliente(empresa) {
-            const res = await fetch('/api/equipos');
-            const todosEquipos = await res.json();
-            const equipos = todosEquipos.filter(eq => eq.empresa.toLowerCase() === empresa.toLowerCase());
-            
-            const tbody = document.getElementById('tabla-cliente');
-            tbody.innerHTML = '';
-
-            if (equipos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No tienes equipos asignados actualmente.</td></tr>`;
+        document.getElementById('formTicketCliente').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const checks = document.querySelectorAll('.equipo-check:checked');
+            if (checks.length === 0) {
+                alert('Por favor selecciona al menos un equipo de la lista.');
                 return;
             }
 
-            const coordenadasCiudades = {
-                'Bogotá D.C.': [4.60971, -74.08175],
-                'Medellín': [6.2442, -75.5812],
-                'Cali': [3.4516, -76.5320],
-                'Barranquilla': [10.9685, -74.7813]
-            };
-
-            equipos.forEach((eq, index) => {
-                let badgeClass = 'bg-secondary';
-                if (eq.estado.includes('1.')) badgeClass = 'bg-warning text-dark';
-                else if (eq.estado.includes('2.')) badgeClass = 'bg-info text-dark';
-                else if (eq.estado.includes('3.')) badgeClass = 'bg-primary';
-                else if (eq.estado.includes('4.')) badgeClass = 'bg-success';
-
-                const coords = coordenadasCiudades[eq.ciudad] || [4.60971, -74.08175];
-
-                tbody.innerHTML += `
-                    <tr style="cursor: pointer;" onclick="actualizarUbicMapa(${coords[0]}, ${coords[1]}, '${eq.nombre} (${eq.codigo}) - ${eq.localizador}')">
-                        <td><strong>${eq.codigo}</strong></td>
-                        <td>${eq.nombre}</td>
-                        <td>🌍 ${eq.ciudad || 'Bogotá D.C.'}</td>
-                        <td><span class="badge tracker-step ${badgeClass}">${eq.estado}</span></td>
-                        <td>⏱️ ${eq.tiempo_alquiler || 'N/A'}</td>
-                    </tr>
-                `;
-
-                if (index === 0) {
-                    actualizarUbicMapa(coords[0], coords[1], `${eq.nombre} (${eq.codigo}) - ${eq.localizador}`);
-                }
+            const items = [];
+            checks.forEach(chk => {
+                const index = chk.id.split('_')[1];
+                const cantidadVal = document.getElementById(`cant_${index}`).value;
+                items.push({ equipo_nombre: chk.value, cantidad: Number.parseInt(cantidadVal, 10) });
             });
-        }
 
-        function actualizarUbicMapa(lat, lon, descripcion) {
-            if (mapa) {
-                mapa.setView([lat, lon], 14);
-                if (marcador) {
-                    mapa.removeLayer(marcador);
-                }
-                marcador = L.marker([lat, lon]).addTo(mapa)
-                    .bindPopup(`<b>📦 Equipo en Ruta:</b><br>${descripcion}`)
-                    .openPopup();
-                
-                document.getElementById('detalle-gps').innerHTML = `📍 <strong>Ubicación Actual:</strong> ${descripcion}`;
-            }
-        }
-
-        async function liberarEquipo(id) {
-            const res = await fetch(`/api/equipos/${id}/liberar`, { method: 'PUT' });
-            const result = await res.json();
-            if (result.success) {
-                alert('¡Equipo finalizado y devuelto a inventario!');
-                cargarEquiposAdmin();
-            }
-        }
-
-        async function guardarEquipo() {
-            const data = {
-                nombre: document.getElementById('eq-nombre').value,
-                codigo: document.getElementById('eq-codigo').value,
-                ciudad: document.getElementById('eq-ciudad').value,
-                estado: document.getElementById('eq-estado').value,
-                localizador: document.getElementById('eq-localizador').value,
-                empresa: document.getElementById('eq-empresa').value,
-                area: document.getElementById('eq-area').value,
-                tiempo_alquiler: document.getElementById('eq-tiempo').value,
-                cantidad: 1
+            const datos = {
+                cliente_empresa: usuarioActual.usuario,
+                ciudad_destino: document.getElementById('selectCiudadCliente').value,
+                area_destino: document.getElementById('inputAreaCliente').value,
+                tiempo_alquiler: document.getElementById('selectTiempoAlquiler').value,
+                items: items
             };
 
-            const res = await fetch('/api/equipos', {
+            const res = await fetch('/api/tickets', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify(datos)
             });
-            const result = await res.json();
-            if (result.success) {
-                alert('¡Equipo registrado con éxito!');
-                cargarEquiposAdmin();
+
+            if (res.ok) {
+                alert('Solicitud múltiple enviada correctamente.');
+                document.getElementById('inputAreaCliente').value = '';
+                cargarCatalogoCheckboxes();
+                cargarMisTickets();
+            }
+        });
+
+        async function cargarMisTickets() {
+            const res = await fetch(`/api/tickets?empresa=${encodeURIComponent(usuarioActual.usuario)}`);
+            const tickets = await res.json();
+            
+            const activosTbody = document.getElementById('tablaMisTicketsActivos');
+            const cerradosTbody = document.getElementById('tablaMisTicketsCerrados');
+
+            const activos = tickets.filter(t => t.estado_logistico !== '6. Ticket Cerrado');
+            const cerrados = tickets.filter(t => t.estado_logistico === '6. Ticket Cerrado');
+
+            activosTbody.innerHTML = activos.length === 0 ? '<tr><td colspan="5" class="text-center text-muted">No hay solicitudes activas.</td></tr>' :
+                activos.map(t => renderFilaTicketCliente(t)).join('');
+
+            cerradosTbody.innerHTML = cerrados.length === 0 ? '<tr><td colspan="5" class="text-center text-muted">No hay tickets cerrados.</td></tr>' :
+                cerrados.map(t => renderFilaTicketCliente(t)).join('');
+        }
+
+        function renderFilaTicketCliente(t) {
+            const listaEquipos = t.detalles.map(d => `• ${d.equipo_nombre} (<b>${d.cantidad} un.</b>)`).join('<br>');
+            return `
+                <tr>
+                    <td>#${t.id}</td>
+                    <td><b>Área:</b> ${t.area_destino}<br><small class="text-muted">🌍 ${t.ciudad_destino}</small></td>
+                    <td>${listaEquipos}<br><span class="badge bg-light text-dark border mt-1">⏱️ ${t.tiempo_alquiler || '1 Mes'}</span></td>
+                    <td><span class="badge bg-success">${t.estado_logistico}</span></td>
+                    <td><button class="btn btn-sm btn-outline-primary py-0" onclick="verDetalleTicket(${t.id}, false)">Ver Avances</button></td>
+                </tr>
+            `;
+        }
+
+        async function cargarAdminTickets() {
+            const res = await fetch('/api/tickets');
+            const tickets = await res.json();
+
+            const activosTbody = document.getElementById('tablaAdminTicketsActivos');
+            const cerradosTbody = document.getElementById('tablaAdminTicketsCerrados');
+
+            const activos = tickets.filter(t => t.estado_logistico !== '6. Ticket Cerrado');
+            const cerrados = tickets.filter(t => t.estado_logistico === '6. Ticket Cerrado');
+
+            activosTbody.innerHTML = activos.length === 0 ? '<tr><td colspan="6" class="text-center text-muted">No hay solicitudes activas.</td></tr>' :
+                activos.map(t => renderFilaTicketAdmin(t)).join('');
+
+            cerradosTbody.innerHTML = cerrados.length === 0 ? '<tr><td colspan="6" class="text-center text-muted">No hay tickets cerrados en el historial.</td></tr>' :
+                cerrados.map(t => renderFilaTicketAdmin(t)).join('');
+        }
+
+        function renderFilaTicketAdmin(t) {
+            const listaEquipos = t.detalles.map(d => `• ${d.equipo_nombre} (<b>${d.cantidad} un.</b>)`).join('<br>');
+            const esCerrado = t.estado_logistico === '6. Ticket Cerrado';
+
+            return `
+                <tr>
+                    <td>#${t.id}</td>
+                    <td><b>${t.cliente_empresa}</b><br><small class="text-muted">Área: ${t.area_destino}</small></td>
+                    <td>${listaEquipos}<br><span class="badge bg-light text-dark border mt-1">⏱️ ${t.tiempo_alquiler || '1 Mes'}</span></td>
+                    <td>
+                        <select class="form-select form-select-sm" onchange="actualizarAsignacion(${t.id}, this.value)" aria-label="Asignar operador logístico">
+                            <option value="Sin Asignar">Seleccionar operador...</option>
+                            ${operadoresLogistica.map(op => `<option value="${op}" ${t.asignado_a === op ? 'selected' : ''}>${op}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm fw-bold ${esCerrado ? 'text-secondary' : 'text-primary'}" onchange="actualizarEstado(${t.id}, this.value)" aria-label="Estado del ticket logístico">
+                            <option value="1. Recibido" ${t.estado_logistico === '1. Recibido' ? 'selected' : ''}>1. Recibido</option>
+                            <option value="2. En Reparación" ${t.estado_logistico === '2. En Reparación' ? 'selected' : ''}>2. En Reparación</option>
+                            <option value="3. Salida de Bodega" ${t.estado_logistico === '3. Salida de Bodega' ? 'selected' : ''}>3. Salida de Bodega</option>
+                            <option value="4. En Reparto" ${t.estado_logistico === '4. En Reparto' ? 'selected' : ''}>4. En Reparto</option>
+                            <option value="5. Entregado al Cliente" ${t.estado_logistico === '5. Entregado al Cliente' ? 'selected' : ''}>5. Entregado al Cliente</option>
+                            <option value="6. Ticket Cerrado" ${esCerrado ? 'selected' : ''}>🔒 6. Ticket Cerrado</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-dark py-0" onclick="verDetalleTicket(${t.id}, true)">Comentarios y Notas</button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        async function actualizarEstado(id, nuevoEstado) {
+            await fetch(`/api/tickets/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estado_logistico: nuevoEstado })
+            });
+            cargarAdminTickets();
+        }
+
+        async function actualizarAsignacion(id, operador) {
+            await fetch(`/api/tickets/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ asignado_a: operador })
+            });
+        }
+
+        async function verDetalleTicket(id, esAdmin) {
+            document.getElementById('modalTicketId').value = id;
+            const seccionComentario = document.getElementById('seccionNuevoComentario');
+            if (esAdmin) {
+                seccionComentario.classList.remove('d-none');
             } else {
-                alert('Error: ' + result.error);
+                seccionComentario.classList.add('d-none');
+            }
+
+            const res = await fetch(`/api/tickets/${id}/detalle`);
+            const data = await res.json();
+            document.getElementById('modalTitulo').innerText = `Trazabilidad Ticket #${data.ticket.id} - ${data.ticket.cliente_empresa} (${data.ticket.area_destino})`;
+
+            const histDiv = document.getElementById('historialComentarios');
+            if (data.comentarios.length === 0) {
+                histDiv.innerHTML = '<p class="text-muted small mb-0">No hay comentarios ni notas registradas todavía.</p>';
+            } else {
+                histDiv.innerHTML = data.comentarios.map(c => `
+                    <div class="mb-2 border-bottom pb-1">
+                        <small class="fw-bold text-primary">${c.autor} (${c.rol})</small>
+                        <small class="text-muted float-end">${new Date(c.fecha).toLocaleString()}</small>
+                        <p class="mb-0 small text-dark">${c.comentario}</p>
+                    </div>
+                `).join('');
+            }
+
+            new bootstrap.Modal(document.getElementById('modalTrazabilidad')).show();
+        }
+
+        async function enviarComentarioAdmin() {
+            const id = document.getElementById('modalTicketId').value;
+            const comentario = document.getElementById('textoComentarioAdmin').value;
+            if (!comentario) return;
+
+            const res = await fetch(`/api/tickets/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ comentario, admin_nombre: "Supervisor Logística" })
+            });
+
+            if (res.ok) {
+                document.getElementById('textoComentarioAdmin').value = '';
+                verDetalleTicket(id, true);
             }
         }
     </script>
