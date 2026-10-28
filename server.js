@@ -24,23 +24,37 @@ db.serialize(() => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         usuario TEXT UNIQUE,
         password TEXT,
-        rol TEXT DEFAULT 'cliente'
+        rol TEXT DEFAULT 'cliente',
+        nit TEXT,
+        razon_social TEXT,
+        contacto_persona TEXT,
+        telefono TEXT,
+        correo TEXT,
+        direccion TEXT
     )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS equipos_catalogo (
+    db.run(`CREATE TABLE IF NOT EXISTS equipos_inventario (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        serial TEXT UNIQUE,
         nombre TEXT,
-        caracteristicas TEXT,
-        ciudad TEXT
+        marca TEXT,
+        modelo TEXT,
+        estado TEXT DEFAULT 'Disponible',
+        empresa_actual TEXT DEFAULT NULL,
+        fecha_vencimiento TEXT DEFAULT NULL
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS tickets (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         cliente_empresa TEXT NOT NULL,
+        nit TEXT,
+        direccion_entrega TEXT NOT NULL,
+        horario_recepcion TEXT,
+        persona_recibe TEXT,
         ciudad_destino TEXT NOT NULL,
         area_destino TEXT NOT NULL,
         tiempo_alquiler TEXT DEFAULT '1 Mes',
-        estado_logistico TEXT DEFAULT '1. Recibido',
+        estado_logistico TEXT DEFAULT '1. Solicitado',
         asignado_a TEXT DEFAULT 'Sin Asignar',
         fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
@@ -69,16 +83,18 @@ db.serialize(() => {
         }
     });
 
-    db.get("SELECT COUNT(*) as count FROM equipos_catalogo", (err, row) => {
+    db.get("SELECT COUNT(*) as count FROM equipos_inventario", (err, row) => {
         if (row?.count === 0) {
-            const equipos = [
-                ['Laptop Dell Latitude', 'Core i7, 16GB RAM, 512GB SSD', 'Bogotá D.C.'],
-                ['Laptop HP ProBook', 'Core i5, 8GB RAM, 256GB SSD', 'Medellín'],
-                ['Workstation Lenovo', 'Intel Xeon, 32GB RAM, 1TB SSD', 'Cali'],
-                ['Computador Escritorio HP', 'Core i5, 16GB RAM, Pantalla 24"', 'Barranquilla']
+            const inventarioInicial = [
+                ['DL-784201', 'Laptop Dell Latitude', 'Dell', 'Latitude 5420', 'Disponible'],
+                ['DL-784202', 'Laptop Dell Latitude', 'Dell', 'Latitude 5420', 'Disponible'],
+                ['HP-991201', 'Laptop HP ProBook', 'HP', 'ProBook 450 G8', 'Disponible'],
+                ['HP-991202', 'Laptop HP ProBook', 'HP', 'ProBook 450 G8', 'Disponible'],
+                ['LN-332101', 'Workstation Lenovo', 'Lenovo', 'ThinkPad P15', 'Disponible'],
+                ['HP-ESC-01', 'Computador Escritorio HP', 'HP', 'EliteDesk 800', 'Disponible']
             ];
-            const stmt = db.prepare("INSERT INTO equipos_catalogo (nombre, caracteristicas, ciudad) VALUES (?, ?, ?)");
-            equipos.forEach(eq => stmt.run(eq));
+            const stmt = db.prepare("INSERT INTO equipos_inventario (serial, nombre, marca, modelo, estado) VALUES (?, ?, ?, ?, ?)");
+            inventarioInicial.forEach(eq => stmt.run(eq));
             stmt.finalize();
         }
     });
@@ -93,16 +109,19 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 app.post('/api/auth/registro', (req, res) => {
-    const { usuario, password } = req.body;
-    if (!usuario || !password) return res.status(400).json({ error: "Completa los campos" });
-    db.run("INSERT INTO usuarios (usuario, password, rol) VALUES (?, ?, 'cliente')", [usuario, password], function(err) {
+    const { usuario, password, nit, razon_social, contacto_persona, telefono, correo, direccion } = req.body;
+    if (!usuario || !password) return res.status(400).json({ error: "Completa los campos obligatorios" });
+    
+    const sql = `INSERT INTO usuarios (usuario, password, rol, nit, razon_social, contacto_persona, telefono, correo, direccion) 
+                 VALUES (?, ?, 'cliente', ?, ?, ?, ?, ?, ?)`;
+    db.run(sql, [usuario, password, nit, razon_social, contacto_persona, telefono, correo, direccion], function(err) {
         if (err) return res.status(400).json({ error: "El usuario ya existe" });
         res.json({ message: "Registrado con éxito", id: this.lastID });
     });
 });
 
-app.get('/api/catalogo', (req, res) => {
-    db.all("SELECT * FROM equipos_catalogo", [], (err, rows) => {
+app.get('/api/inventario', (req, res) => {
+    db.all("SELECT * FROM equipos_inventario", [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
@@ -138,13 +157,15 @@ app.get('/api/tickets', (req, res) => {
 });
 
 app.post('/api/tickets', (req, res) => {
-    const { cliente_empresa, ciudad_destino, area_destino, tiempo_alquiler, items } = req.body;
+    const { cliente_empresa, nit, direccion_entrega, horario_recepcion, persona_recibe, ciudad_destino, area_destino, tiempo_alquiler, items } = req.body;
     if (!items || items.length === 0) {
         return res.status(400).json({ error: "Debe seleccionar al menos un equipo." });
     }
 
-    const sqlTicket = "INSERT INTO tickets (cliente_empresa, ciudad_destino, area_destino, tiempo_alquiler, estado_logistico) VALUES (?, ?, ?, ?, '1. Recibido')";
-    db.run(sqlTicket, [cliente_empresa, ciudad_destino, area_destino, tiempo_alquiler || '1 Mes'], function(err) {
+    const sqlTicket = `INSERT INTO tickets (cliente_empresa, nit, direccion_entrega, horario_recepcion, persona_recibe, ciudad_destino, area_destino, tiempo_alquiler, estado_logistico) 
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, '1. Solicitado')`;
+    
+    db.run(sqlTicket, [cliente_empresa, nit, direccion_entrega, horario_recepcion, persona_recibe, ciudad_destino, area_destino, tiempo_alquiler || '1 Mes'], function(err) {
         if (err) return res.status(500).json({ error: err.message });
         const ticketId = this.lastID;
 
