@@ -126,7 +126,8 @@ app.post('/api/auth/login', (req, res) => {
             return res.status(401).json({ error: "Usuario o contraseña incorrectos" });
         }
 
-        const { password: _, ...userWithoutPassword } = user;
+        const userWithoutPassword = { ...user };
+        delete userWithoutPassword.password;
         res.json({ message: "Login exitoso", usuario: userWithoutPassword });
     });
 });
@@ -150,6 +151,7 @@ app.post('/api/auth/registro', async (req, res) => {
                 res.json({ message: "Registrado con éxito", id: this.lastID });
             });
         } catch (hashError) {
+            console.error("Error al procesar seguridad:", hashError);
             res.status(500).json({ error: "Error interno al procesar la seguridad" });
         }
     });
