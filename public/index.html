@@ -53,7 +53,7 @@
                 </div>
             </form>
 
-            <!-- Formulario de Registro (Oculto inicialmente) -->
+            <!-- Formulario de Registro -->
             <form id="form-registro" onsubmit="handleRegistro(event)" class="space-y-4 hidden">
                 <div>
                     <label for="reg-usuario" class="block text-xs font-semibold text-slate-600 uppercase mb-1">Usuario</label>
@@ -78,14 +78,13 @@
             </form>
         </div>
 
-        <!-- PANEL DE CLIENTE / APLICACIÓN (Oculto hasta iniciar sesión) -->
+        <!-- PANEL DE CLIENTE / ADMIN -->
         <div id="dashboard-container" class="hidden space-y-6">
             
-            <!-- Bienvenida y Pestañas de Navegación -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-100 gap-4">
                 <div>
                     <h2 id="welcome-title" class="text-xl font-bold text-slate-900">Portal Logístico</h2>
-                    <p class="text-sm text-slate-500">Gestión de flota de equipos, alquileres y soporte técnico corporativo.</p>
+                    <p class="text-sm text-slate-500">Gestión de flota de equipos, trazabilidad y soporte técnico corporativo.</p>
                 </div>
                 <div id="client-nav-tabs" class="flex space-x-2 bg-slate-100 p-1 rounded-xl">
                     <button onclick="switchTab('alquiler')" id="tab-btn-alquiler" class="px-4 py-2 text-xs font-semibold rounded-lg bg-white shadow-sm text-blue-600 transition">Solicitudes de Alquiler</button>
@@ -93,29 +92,29 @@
                 </div>
             </div>
 
-            <!-- PANEL EXCLUSIVO PARA ADMINISTRADOR (Gestión general) -->
+            <!-- PANEL ADMINISTRADOR -->
             <div id="admin-panel-section" class="hidden bg-slate-900 text-white p-6 rounded-2xl shadow-md mb-6">
                 <h3 class="text-lg font-bold mb-2">Panel de Control de Administrador</h3>
-                <p class="text-xs text-slate-300 mb-4">Aquí puedes supervisar todas las solicitudes a nivel nacional, cambiar estados logísticos y gestionar incidencias.</p>
+                <p class="text-xs text-slate-300 mb-4">Supervisión nacional de flota y trazabilidad de tickets.</p>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
                     <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
                         <span class="block text-xs text-slate-400 uppercase font-semibold">Total Solicitudes</span>
                         <span id="admin-stat-total" class="text-2xl font-bold text-blue-400">0</span>
                     </div>
                     <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                        <span class="block text-xs text-slate-400 uppercase font-semibold">En Proceso</span>
+                        <span class="block text-xs text-slate-400 uppercase font-semibold">En Proceso / Ruta</span>
                         <span id="admin-stat-proceso" class="text-2xl font-bold text-amber-400">0</span>
                     </div>
                     <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                        <span class="block text-xs text-slate-400 uppercase font-semibold">Finalizadas</span>
+                        <span class="block text-xs text-slate-400 uppercase font-semibold">Entregados / En Uso</span>
                         <span id="admin-stat-fin" class="text-2xl font-bold text-emerald-400">0</span>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB 1: SOLICITUDES DE ALQUILER (Solo Clientes) -->
+            <!-- TAB 1: ALQUILER -->
             <div id="tab-alquiler" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-                <h3 class="text-lg font-bold text-slate-900 mb-4">Nueva Solicitud de Equipos</h3>
+                <h3 class="text-lg font-bold text-slate-900 mb-4">Nueva Solicitud de Equipos con Trazabilidad</h3>
                 <form onsubmit="crearTicket(event, 'Alquiler')" class="space-y-4">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
@@ -152,11 +151,26 @@
                                 <option>1 Año</option>
                             </select>
                         </div>
+                        <div>
+                            <label for="prioridad_ticket" class="block text-xs font-semibold text-slate-600 uppercase mb-1">Prioridad</label>
+                            <select id="prioridad_ticket" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
+                                <option>Normal</option>
+                                <option>Urgente</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="fecha_deseada" class="block text-xs font-semibold text-slate-600 uppercase mb-1">Fecha Deseada de Entrega</label>
+                            <input type="date" id="fecha_deseada" required class="w-full px-3 py-2 border rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label for="observaciones_ticket" class="block text-xs font-semibold text-slate-600 uppercase mb-1">Observaciones / Notas</label>
+                            <input type="text" id="observaciones_ticket" class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Instrucciones especiales">
+                        </div>
                     </div>
 
-                    <!-- Selección de Equipos -->
+                    <!-- Selección de Equipos por Serial -->
                     <div class="mt-4 pt-4 border-t border-slate-100">
-                        <span class="block text-xs font-semibold text-slate-600 uppercase mb-2">Selecciona los equipos y cantidades:</span>
+                        <span class="block text-xs font-semibold text-slate-600 uppercase mb-2">Selecciona los equipos de la flota:</span>
                         <div id="inventario-checkboxes" class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
                             <!-- Se carga dinámicamente -->
                         </div>
@@ -166,7 +180,7 @@
                 </form>
             </div>
 
-            <!-- TAB 2: SOPORTE TÉCNICO (Solo Clientes) -->
+            <!-- TAB 2: SOPORTE -->
             <div id="tab-soporte" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hidden">
                 <h3 class="text-lg font-bold text-slate-900 mb-4">Reportar Incidencia o Soporte Técnico</h3>
                 <form onsubmit="crearTicket(event, 'Soporte')" class="space-y-4">
@@ -176,8 +190,9 @@
                             <select id="categoria_incidencia" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
                                 <option>Falla de Hardware</option>
                                 <option>Problema de Red / Conectividad</option>
-                                <option>Actualización de Software</option>
-                                <option>Soporte General</option>
+                                <option>Cambio de Equipo</option>
+                                <option>Mantenimiento</option>
+                                <option>Recogida Anticipada</option>
                             </select>
                         </div>
                         <div>
@@ -189,18 +204,19 @@
                 </form>
             </div>
 
-            <!-- HISTORIAL / GESTIÓN DE TICKETS -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-                <h3 id="titulo-tabla-tickets" class="text-lg font-bold text-slate-900 mb-4">Historial de Solicitudes y Tickets</h3>
+            <!-- HISTORIAL -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-4">
+                <h3 id="titulo-tabla-tickets" class="text-lg font-bold text-slate-900 mb-2">Trazabilidad y Historial de Solicitudes</h3>
+                
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="border-b text-xs font-semibold text-slate-500 uppercase bg-slate-50">
-                                <th class="p-3">ID</th>
-                                <th class="p-3">Tipo</th>
-                                <th class="p-3">Empresa / Ciudad</th>
+                                <th class="p-3">Código TKT</th>
+                                <th class="p-3">Tipo / Prioridad</th>
+                                <th class="p-3">Empresa / Destino</th>
                                 <th class="p-3">Estado Logístico</th>
-                                <th class="p-3">Fecha</th>
+                                <th class="p-3">Fecha Creación</th>
                                 <th id="th-acciones" class="p-3 hidden">Gestión Admin</th>
                             </tr>
                         </thead>
@@ -219,7 +235,7 @@
         TrackExpress &copy; 2026 - Sistema de Gestión Logística Corporativa
     </footer>
 
-    <!-- SCRIPT DE CONTROL FRONTEND -->
+    <!-- SCRIPT DE CONTROL FRONTEND (Funciones separadas para menor complejidad cognitiva) -->
     <script>
         let usuarioActual = null;
 
@@ -237,17 +253,11 @@
         }
 
         function switchTab(tipo) {
-            if(tipo === 'alquiler') {
-                document.getElementById('tab-alquiler').classList.remove('hidden');
-                document.getElementById('tab-soporte').classList.add('hidden');
-                document.getElementById('tab-btn-alquiler').className = "px-4 py-2 text-xs font-semibold rounded-lg bg-white shadow-sm text-blue-600 transition";
-                document.getElementById('tab-btn-soporte').className = "px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition";
-            } else {
-                document.getElementById('tab-alquiler').classList.add('hidden');
-                document.getElementById('tab-soporte').classList.remove('hidden');
-                document.getElementById('tab-btn-soporte').className = "px-4 py-2 text-xs font-semibold rounded-lg bg-white shadow-sm text-blue-600 transition";
-                document.getElementById('tab-btn-alquiler').className = "px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition";
-            }
+            const esAlquiler = tipo === 'alquiler';
+            document.getElementById('tab-alquiler').classList.toggle('hidden', !esAlquiler);
+            document.getElementById('tab-soporte').classList.toggle('hidden', esAlquiler);
+            document.getElementById('tab-btn-alquiler').className = esAlquiler ? "px-4 py-2 text-xs font-semibold rounded-lg bg-white shadow-sm text-blue-600 transition" : "px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition";
+            document.getElementById('tab-btn-soporte').className = !esAlquiler ? "px-4 py-2 text-xs font-semibold rounded-lg bg-white shadow-sm text-blue-600 transition" : "px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition";
         }
 
         async function handleLogin(e) {
@@ -299,23 +309,15 @@
             document.getElementById('nav-user-welcome').innerText = `${usuarioActual.razon_social || usuarioActual.usuario} (${usuarioActual.rol.toUpperCase()})`;
             document.getElementById('welcome-title').innerText = `Portal - ${usuarioActual.razon_social || usuarioActual.usuario}`;
             
-            if(usuarioActual.rol === 'admin') {
-                // Si es admin: ocultar formularios de creación, mostrar panel admin y controles de gestión
-                document.getElementById('tab-alquiler').classList.add('hidden');
-                document.getElementById('tab-soporte').classList.add('hidden');
-                document.getElementById('client-nav-tabs').classList.add('hidden');
-                document.getElementById('admin-panel-section').classList.remove('hidden');
-                document.getElementById('titulo-tabla-tickets').innerText = "Gestión Global de Solicitudes (Administrador)";
-                document.getElementById('th-acciones').classList.remove('hidden');
-            } else {
-                // Si es cliente: mostrar pestañas y formularios de solicitud
-                document.getElementById('tab-alquiler').classList.remove('hidden');
-                document.getElementById('client-nav-tabs').classList.remove('hidden');
-                document.getElementById('admin-panel-section').classList.add('hidden');
-                document.getElementById('titulo-tabla-tickets').innerText = "Historial de Solicitudes y Tickets";
-                document.getElementById('th-acciones').classList.add('hidden');
-                cargarInventario();
-            }
+            const esAdmin = usuarioActual.rol === 'admin';
+            document.getElementById('tab-alquiler').classList.toggle('hidden', esAdmin);
+            document.getElementById('tab-soporte').classList.add('hidden');
+            document.getElementById('client-nav-tabs').classList.toggle('hidden', esAdmin);
+            document.getElementById('admin-panel-section').classList.toggle('hidden', !esAdmin);
+            document.getElementById('titulo-tabla-tickets').innerText = esAdmin ? "Gestión Global y Trazabilidad (Administrador)" : "Historial y Trazabilidad de Solicitudes";
+            document.getElementById('th-acciones').classList.toggle('hidden', !esAdmin);
+
+            if (!esAdmin) cargarInventario();
             cargarTickets();
         }
 
@@ -337,7 +339,7 @@
                     <div class="flex items-center justify-between bg-white p-2.5 rounded-lg border border-slate-200">
                         <label class="flex items-center space-x-2 text-sm font-medium text-slate-700 cursor-pointer">
                             <input type="checkbox" name="equipo_sel" value="${eq.nombre}" class="rounded text-blue-600 focus:ring-blue-500">
-                            <span>${eq.nombre} (${eq.serial})</span>
+                            <span>${eq.nombre} (Serial: <strong>${eq.serial}</strong>)</span>
                         </label>
                         <input type="number" min="1" value="1" id="cant_${eq.nombre}" class="w-16 px-2 py-1 text-xs border rounded text-center">
                     </div>
@@ -355,7 +357,7 @@
                     items.push({ equipo_nombre: cb.value, cantidad: Number.parseInt(cant, 10) });
                 });
                 if(items.length === 0) {
-                    alert("Debes seleccionar al menos un equipo.");
+                    alert("Debes seleccionar al menos un equipo de la flota.");
                     return;
                 }
             }
@@ -371,6 +373,9 @@
                 area_destino: tipo === 'Alquiler' ? document.getElementById('area_destino').value : 'Soporte Técnico',
                 tiempo_alquiler: tipo === 'Alquiler' ? document.getElementById('tiempo_alquiler').value : 'N/A',
                 categoria_incidencia: tipo === 'Soporte' ? document.getElementById('categoria_incidencia').value : 'N/A',
+                prioridad: document.getElementById('prioridad_ticket')?.value || 'Normal',
+                observaciones: document.getElementById('observaciones_ticket')?.value || '',
+                fecha_deseada: document.getElementById('fecha_deseada')?.value || new Date().toISOString().split('T')[0],
                 items: items
             };
 
@@ -381,7 +386,8 @@
             });
 
             if(res.ok) {
-                alert("¡Solicitud enviada con éxito!");
+                const data = await res.json();
+                alert(`¡Solicitud enviada con éxito! Código generado: ${data.codigo}`);
                 cargarTickets();
             } else {
                 const err = await res.json();
@@ -393,45 +399,79 @@
             const empresaFiltro = usuarioActual.rol === 'admin' ? '' : `?empresa=${encodeURIComponent(usuarioActual.razon_social || usuarioActual.usuario)}`;
             const res = await fetch(`/api/tickets${empresaFiltro}`);
             const tickets = await res.json();
+            
+            if(usuarioActual.rol === 'admin') {
+                actualizarEstadisticasAdmin(tickets);
+            }
+            
+            renderizarTablaTickets(tickets);
+        }
+
+        function actualizarEstadisticasAdmin(tickets) {
+            const total = tickets.length;
+            const proceso = tickets.filter(t => t.estado_logistico && t.estado_logistico.includes('Proceso')).length;
+            const finalizadas = tickets.filter(t => t.estado_logistico && (t.estado_logistico.includes('Entregado') || t.estado_logistico.includes('Uso'))).length;
+            
+            document.getElementById('admin-stat-total').innerText = total;
+            document.getElementById('admin-stat-proceso').innerText = proceso;
+            document.getElementById('admin-stat-fin').innerText = finalizadas;
+        }
+
+        function renderizarTablaTickets(tickets) {
             const tbody = document.getElementById('tabla-tickets');
             tbody.innerHTML = '';
 
-            if(usuarioActual.rol === 'admin') {
-                let total = tickets.length;
-                let proceso = tickets.filter(t => t.estado_logistico && t.estado_logistico.includes('Proceso')).length;
-                let finalizadas = tickets.filter(t => t.estado_logistico && (t.estado_logistico.includes('Finalizado') || t.estado_logistico.includes('Entregado'))).length;
-                
-                document.getElementById('admin-stat-total').innerText = total;
-                document.getElementById('admin-stat-proceso').innerText = proceso;
-                document.getElementById('admin-stat-fin').innerText = finalizadas;
-            }
-
             tickets.forEach(t => {
-                let adminActions = '';
-                if(usuarioActual.rol === 'admin') {
-                    adminActions = `
-                        <td class="p-3">
-                            <select onchange="actualizarEstadoAdmin(${t.id}, this.value)" class="text-xs px-2 py-1 border rounded bg-slate-50 font-medium">
-                                <option value="1. Solicitado" ${t.estado_logistico === '1. Solicitado' ? 'selected' : ''}>1. Solicitado</option>
-                                <option value="2. En Proceso" ${t.estado_logistico === '2. En Proceso' ? 'selected' : ''}>2. En Proceso</option>
-                                <option value="3. Despachado" ${t.estado_logistico === '3. Despachado' ? 'selected' : ''}>3. Despachado</option>
-                                <option value="4. Entregado" ${t.estado_logistico === '4. Entregado' ? 'selected' : ''}>4. Entregado</option>
-                            </select>
-                        </td>
-                    `;
-                }
+                const adminActions = usuarioActual.rol === 'admin' ? construirSelectEstado(t) : '';
+                const comentariosHtml = construirHtmlComentarios(t);
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="p-3 font-semibold text-slate-900">#${t.id}</td>
-                        <td class="p-3"><span class="px-2.5 py-1 text-xs rounded-full font-medium ${t.tipo_ticket === 'Alquiler' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}">${t.tipo_ticket}</span></td>
+                    <tr class="hover:bg-slate-50 transition border-b">
+                        <td class="p-3 font-semibold text-slate-900">${t.codigo_ticket || '#'+t.id}</td>
+                        <td class="p-3">
+                            <span class="px-2.5 py-1 text-xs rounded-full font-medium ${t.tipo_ticket === 'Alquiler' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}">${t.tipo_ticket}</span>
+                            <span class="block text-[11px] text-slate-400 mt-0.5">Prioridad: ${t.prioridad || 'Normal'}</span>
+                        </td>
                         <td class="p-3 text-slate-600">${t.cliente_empresa} <br><span class="text-xs text-slate-400">${t.ciudad_destino}</span></td>
-                        <td class="p-3"><span class="px-2.5 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700 font-medium">${t.estado_logistico}</span></td>
+                        <td class="p-3">
+                            <span class="px-2.5 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700 font-medium">${t.estado_logistico}</span>
+                            ${comentariosHtml}
+                        </td>
                         <td class="p-3 text-xs text-slate-500">${t.fecha_creacion}</td>
                         ${adminActions}
                     </tr>
                 `;
             });
+        }
+
+        function construirSelectEstado(t) {
+            const estados = ["1. Solicitado", "2. Aprobado", "3. En Preparación", "4. En Ruta", "5. Entregado / En Uso", "6. Devolución Solicitada", "7. Cerrado"];
+            let options = estados.map(est => `<option value="${est}" ${t.estado_logistico === est ? 'selected' : ''}>${est}</option>`).join('');
+            return `
+                <td class="p-3">
+                    <select onchange="actualizarEstadoAdmin(${t.id}, this.value)" class="text-xs px-2 py-1 border rounded bg-slate-50 font-medium">
+                        ${options}
+                    </select>
+                </td>
+            `;
+        }
+
+        function construirHtmlComentarios(t) {
+            let html = '<div class="mt-2 space-y-1 text-xs text-slate-600 bg-slate-50 p-2 rounded border">';
+            if (t.comentarios && t.comentarios.length > 0) {
+                t.comentarios.forEach(c => {
+                    html += `<div><strong>${c.autor}</strong> (${c.rol}): ${c.comentario} <span class="text-slate-400 text-[10px]">(${c.fecha})</span></div>`;
+                });
+            } else {
+                html += '<div class="text-slate-400 italic">No hay comentarios aún.</div>';
+            }
+            html += `
+                <div class="mt-2 flex gap-1">
+                    <input type="text" id="input_comentario_${t.id}" placeholder="Escribe un comentario..." class="w-full px-2 py-1 border rounded text-xs bg-white">
+                    <button onclick="enviarComentario(${t.id})" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">Comentar</button>
+                </div>
+            </div>`;
+            return html;
         }
 
         async function actualizarEstadoAdmin(ticketId, nuevoEstado) {
@@ -440,10 +480,32 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ estado_logistico: nuevoEstado })
             });
+            if(res.ok) cargarTickets();
+            else alert("Error al actualizar el estado logístico");
+        }
+
+        async function enviarComentario(ticketId) {
+            const input = document.getElementById(`input_comentario_${ticketId}`);
+            const texto = input.value.trim();
+            if(!texto) return;
+
+            const payload = {
+                autor: usuarioActual.razon_social || usuarioActual.usuario,
+                rol: usuarioActual.rol.toUpperCase(),
+                comentario: texto
+            };
+
+            const res = await fetch(`/api/tickets/${ticketId}/comentarios`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
             if(res.ok) {
+                input.value = '';
                 cargarTickets();
             } else {
-                alert("Error al actualizar el estado logístico");
+                alert("Error al enviar el comentario");
             }
         }
     </script>
