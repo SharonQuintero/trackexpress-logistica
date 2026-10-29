@@ -1,14 +1,14 @@
 {
   "name": "alquiler-equipos",
   "version": "1.0.0",
-  "description": "Sistema de gestion y alquiler de equipos",
+  "description": "Portal Logistico TrackExpress",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "bcrypt": "^5.1.1",
-    "express": "^4.19.2",
+    "bcryptjs": "^2.4.3",
+    "express": "^4.18.2",
     "sqlite3": "^5.1.7"
   }
 }
