@@ -86,7 +86,7 @@
             <div>
                 <h4 class="mb-0 text-success fw-bold" id="tituloCliente">Portal de Seguimiento</h4>
             </div>
-            <button class="btn btn-danger btn-sm" onclick="cerrarSesion()">Cerrar Sesión</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="cerrarSesion()">Cerrar Sesión</button>
         </div>
 
         <ul class="nav nav-tabs mb-3" id="clientTabs" role="tablist">
@@ -106,7 +106,6 @@
                         <div class="card p-4 shadow-sm border-0 bg-white">
                             <h5 class="mb-3 fw-bold text-primary">Nueva Solicitud de Equipos</h5>
                             <form id="formTicketCliente">
-                                <input type="hidden" id="tipoTicketInput" value="Alquiler">
                                 <div class="mb-2">
                                     <label for="selectCiudadCliente" class="form-label small fw-bold">Ciudad de Destino:</label>
                                     <select id="selectCiudadCliente" class="form-select form-select-sm mb-2">
@@ -253,7 +252,7 @@
                 <h4 class="mb-0 fw-bold">Panel de Administración Logística</h4>
                 <small class="text-white-50">Control de entregas, inventario y soporte técnico</small>
             </div>
-            <button class="btn btn-outline-light btn-sm" onclick="cerrarSesion()">Cerrar Sesión</button>
+            <button type="button" class="btn btn-outline-light btn-sm" onclick="cerrarSesion()">Cerrar Sesión</button>
         </div>
 
         <ul class="nav nav-tabs mb-3" id="adminTabs" role="tablist">
@@ -476,45 +475,58 @@
 
         document.getElementById('formTicketCliente').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const checks = document.querySelectorAll('.equipo-check:checked');
-            if (checks.length === 0) {
-                alert('Por favor selecciona al menos un equipo.');
-                return;
-            }
 
-            const items = [];
-            checks.forEach(chk => {
-                const index = chk.id.split('_')[1];
-                const cantidadVal = document.getElementById(`cant_${index}`).value;
-                items.push({ equipo_nombre: chk.value, cantidad: Number.parseInt(cantidadVal, 10) });
-            });
+            try {
+                const checks = document.querySelectorAll('.equipo-check:checked');
+                if (checks.length === 0) {
+                    alert('Por favor selecciona al menos un equipo del catálogo.');
+                    return;
+                }
 
-            const datos = {
-                cliente_empresa: usuarioActual.usuario,
-                nit: usuarioActual.nit || 'NIT Pendiente',
-                direccion_entrega: document.getElementById('inputDireccionEntrega').value,
-                horario_recepcion: document.getElementById('inputHorario').value,
-                persona_recibe: document.getElementById('inputPersonaRecibe').value,
-                ciudad_destino: document.getElementById('selectCiudadCliente').value,
-                area_destino: document.getElementById('inputAreaCliente').value,
-                tiempo_alquiler: document.getElementById('selectTiempoAlquiler').value,
-                tipo_ticket: 'Alquiler',
-                items: items
-            };
+                const items = [];
+                checks.forEach(chk => {
+                    const index = chk.id.split('_')[1];
+                    const cantidadInput = document.getElementById(`cant_${index}`);
+                    const cantidadVal = cantidadInput ? cantidadInput.value : 1;
+                    items.push({ 
+                        equipo_nombre: chk.value, 
+                        cantidad: Number.parseInt(cantidadVal, 10) || 1 
+                    });
+                });
 
-            const res = await fetch('/api/tickets', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datos)
-            });
+                const datos = {
+                    cliente_empresa: usuarioActual ? usuarioActual.usuario : 'Cliente',
+                    nit: (usuarioActual && usuarioActual.nit) ? usuarioActual.nit : 'NIT Pendiente',
+                    direccion_entrega: document.getElementById('inputDireccionEntrega').value,
+                    horario_recepcion: document.getElementById('inputHorario').value,
+                    persona_recibe: document.getElementById('inputPersonaRecibe').value,
+                    ciudad_destino: document.getElementById('selectCiudadCliente').value,
+                    area_destino: document.getElementById('inputAreaCliente').value,
+                    tiempo_alquiler: document.getElementById('selectTiempoAlquiler').value,
+                    tipo_ticket: 'Alquiler',
+                    categoria_incidencia: 'N/A',
+                    items: items
+                };
 
-            if (res.ok) {
-                alert('Solicitud enviada correctamente.');
-                document.getElementById('inputDireccionEntrega').value = '';
-                document.getElementById('inputPersonaRecibe').value = '';
-                document.getElementById('inputHorario').value = '';
-                document.getElementById('inputAreaCliente').value = '';
-                cargarMisTickets();
+                const res = await fetch('/api/tickets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert('¡Solicitud de alquiler enviada con éxito!');
+                    document.getElementById('formTicketCliente').reset();
+                    cargarCatalogoCheckboxes();
+                    cargarMisTickets();
+                } else {
+                    alert(data.error || 'Error al enviar la solicitud.');
+                }
+            } catch (err) {
+                console.error('Error al enviar solicitud:', err);
+                alert('Ocurrió un error inesperado al procesar la solicitud.');
             }
         });
 

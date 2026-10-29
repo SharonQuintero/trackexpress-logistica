@@ -1,6 +1,7 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('node:path');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 app.disable('x-powered-by');
@@ -80,9 +81,11 @@ db.serialize(() => {
         FOREIGN KEY (ticket_id) REFERENCES tickets(id)
     )`);
 
-    db.get("SELECT * FROM usuarios WHERE usuario = 'admin'", (err, row) => {
+    // Crear usuario admin por defecto con contraseña hasheada de forma segura
+    db.get("SELECT * FROM usuarios WHERE usuario = 'admin'", async (err, row) => {
         if (!row) {
-            db.run("INSERT INTO usuarios (usuario, password, rol) VALUES ('admin', 'admin123', 'admin')");
+            const hashedPassword = await bcrypt.hash('admin123', 10);
+            db.run("INSERT INTO usuarios (usuario, password, rol) VALUES ('admin', ?, 'admin')", [hashedPassword]);
         }
     });
 
@@ -103,29 +106,51 @@ db.serialize(() => {
     });
 });
 
+// Login seguro comparando hashes de bcrypt
 app.post('/api/auth/login', (req, res) => {
     const { usuario, password } = req.body;
-    db.get("SELECT * FROM usuarios WHERE usuario = ? AND password = ?", [usuario, password], (err, user) => {
-        if (err || !user) return res.status(401).json({ error: "Usuario o contraseña incorrectos" });
-        res.json({ message: "Login exitoso", usuario: user });
+    if (!usuario || !password) {
+        return res.status(400).json({ error: "Usuario y contraseña requeridos" });
+    }
+
+    db.get("SELECT * FROM usuarios WHERE usuario = ?", [usuario], async (err, user) => {
+        if (err || !user) {
+            return res.status(401).json({ error: "Usuario o contraseña incorrectos" });
+        }
+
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) {
+            return res.status(401).json({ error: "Usuario o contraseña incorrectos" });
+        }
+
+        // Omitir el campo password antes de enviarlo al cliente por seguridad
+        const { password: _, ...userWithoutPassword } = user;
+        res.json({ message: "Login exitoso", usuario: userWithoutPassword });
     });
 });
 
-app.post('/api/auth/registro', (req, res) => {
+// Registro con contraseña protegida mediante hash
+app.post('/api/auth/registro', async (req, res) => {
     const { usuario, password, nit, razon_social, contacto_persona, telefono, correo, direccion } = req.body;
     if (!usuario || !password) return res.status(400).json({ error: "Completa los campos obligatorios" });
     
-    db.get("SELECT id FROM usuarios WHERE usuario = ?", [usuario], (err, row) => {
+    db.get("SELECT id FROM usuarios WHERE usuario = ?", [usuario], async (err, row) => {
         if (row) {
-            return res.status(400).json({ error: "El nombre de usuario ya está en uso. Elige otro." });
+            return res.status(400).json({ error: "El nombre de usuario ya está en uso." });
         }
 
-        const sql = `INSERT INTO usuarios (usuario, password, rol, nit, razon_social, contacto_persona, telefono, correo, direccion) 
-                     VALUES (?, ?, 'cliente', ?, ?, ?, ?, ?, ?)`;
-        db.run(sql, [usuario, password, nit, razon_social || nit, contacto_persona, telefono, correo, direccion], function(err2) {
-            if (err2) return res.status(500).json({ error: err2.message });
-            res.json({ message: "Registrado con éxito", id: this.lastID });
-        });
+        try {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const sql = `INSERT INTO usuarios (usuario, password, rol, nit, razon_social, contacto_persona, telefono, correo, direccion) 
+                         VALUES (?, ?, 'cliente', ?, ?, ?, ?, ?, ?)`;
+            
+            db.run(sql, [usuario, hashedPassword, nit, razon_social || nit, contacto_persona, telefono, correo, direccion], function(err2) {
+                if (err2) return res.status(500).json({ error: err2.message });
+                res.json({ message: "Registrado con éxito", id: this.lastID });
+            });
+        } catch (hashError) {
+            res.status(500).json({ error: "Error interno al procesar la seguridad" });
+        }
     });
 });
 
