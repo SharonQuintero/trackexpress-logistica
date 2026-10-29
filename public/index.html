@@ -92,7 +92,7 @@
                 </div>
             </div>
 
-            <!-- PANEL EXCLUSIVO PARA ADMINISTRADOR (Con pestañas de Alquileres, Soporte, Cerrados e Inventario) -->
+            <!-- PANEL EXCLUSIVO PARA ADMINISTRADOR -->
             <div id="admin-panel-section" class="hidden space-y-6">
                 <!-- Tarjetas de Estadísticas Admin -->
                 <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-md space-y-4">
@@ -229,7 +229,7 @@
                                 <th class="p-3">Código TKT</th>
                                 <th class="p-3">Tipo / Prioridad</th>
                                 <th class="p-3">Empresa / Destino</th>
-                                <th class="p-3">Equipos Asignados (Seriales)</th>
+                                <th class="p-3">Equipos Asignados</th>
                                 <th class="p-3">Estado Logístico y Comentarios</th>
                                 <th id="th-acciones" class="p-3 hidden">Gestión Admin</th>
                             </tr>
@@ -275,6 +275,10 @@
             document.getElementById('tab-soporte').classList.toggle('hidden', esAlquiler);
             document.getElementById('tab-btn-alquiler').className = esAlquiler ? "px-4 py-2 text-xs font-semibold rounded-lg bg-white shadow-sm text-blue-600 transition" : "px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition";
             document.getElementById('tab-btn-soporte').className = !esAlquiler ? "px-4 py-2 text-xs font-semibold rounded-lg bg-white shadow-sm text-blue-600 transition" : "px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition";
+            
+            if(esAlquiler && usuarioActual && usuarioActual.rol !== 'admin') {
+                cargarInventario();
+            }
         }
 
         function switchAdminSubTab(subtab) {
@@ -337,20 +341,24 @@
             document.getElementById('auth-container').classList.add('hidden');
             document.getElementById('dashboard-container').classList.remove('hidden');
             document.getElementById('user-info-section').classList.remove('hidden');
-            document.getElementById('nav-user-welcome').innerText = `${usuarioActual.razon_social || usuarioActual.usuario} (${usuarioActual.rol.toUpperCase()})`;
-            document.getElementById('welcome-title').innerText = `Portal - ${usuarioActual.razon_social || usuarioActual.usuario}`;
+            
+            const nombreMostrar = usuarioActual.razon_social || usuarioActual.usuario;
+            document.getElementById('nav-user-welcome').innerText = `${nombreMostrar} (${usuarioActual.rol.toUpperCase()})`;
+            document.getElementById('welcome-title').innerText = `Portal - ${nombreMostrar}`;
             
             const esAdmin = usuarioActual.rol === 'admin';
             document.getElementById('tab-alquiler').classList.toggle('hidden', esAdmin);
             document.getElementById('tab-soporte').classList.add('hidden');
             document.getElementById('client-nav-tabs').classList.toggle('hidden', esAdmin);
             document.getElementById('admin-panel-section').classList.toggle('hidden', !esAdmin);
-            document.getElementById('titulo-tabla-tickets').innerText = esAdmin ? "Panel de Gestión de Solicitudes" : "Historial, Trazabilidad y Equipos Asignados";
             document.getElementById('th-acciones').classList.toggle('hidden', !esAdmin);
 
-            if (!esAdmin) cargarInventario();
+            if (!esAdmin) {
+                cargarInventario();
+            } else {
+                cargarInventarioGlobalAdmin();
+            }
             cargarTickets();
-            if (esAdmin) cargarInventarioGlobalAdmin();
         }
 
         function cerrarSesion() {
@@ -362,26 +370,42 @@
         }
 
         async function cargarInventario() {
-            const res = await fetch('/api/inventario');
-            const equipos = await res.json();
-            const contenedor = document.getElementById('inventario-checkboxes');
-            contenedor.innerHTML = '';
-            equipos.forEach(eq => {
-                contenedor.innerHTML += `
-                    <div class="flex items-center justify-between bg-white p-2.5 rounded-lg border border-slate-200">
-                        <label class="flex items-center space-x-2 text-sm font-medium text-slate-700 cursor-pointer">
-                            <input type="checkbox" name="equipo_sel" value="${eq.nombre}" class="rounded text-blue-600 focus:ring-blue-500">
-                            <span>${eq.nombre} (Serial: <strong class="text-blue-600">${eq.serial}</strong>)</span>
-                        </label>
-                        <input type="number" min="1" value="1" id="cant_${eq.nombre}" class="w-16 px-2 py-1 text-xs border rounded text-center">
-                    </div>
-                `;
-            });
+            try {
+                const res = await fetch('/api/inventario');
+                const equipos = await res.json();
+                const contenedor = document.getElementById('inventario-checkboxes');
+                if (!contenedor) return;
+                contenedor.innerHTML = '';
+                if (equipos.length === 0) {
+                    contenedor.innerHTML = '<p class="text-xs text-slate-400 italic">No hay equipos disponibles en este momento.</p>';
+                    return;
+                }
+                equipos.forEach(eq => {
+                    contenedor.innerHTML += `
+                        <div class="flex items-center justify-between bg-white p-2.5 rounded-lg border border-slate-200">
+                            <label class="flex items-center space-x-2 text-sm font-medium text-slate-700 cursor-pointer">
+                                <input type="checkbox" name="equipo_sel" value="${eq.nombre}" class="rounded text-blue-600 focus:ring-blue-500">
+                                <span>${eq.nombre} (Serial: <strong class="text-blue-600">${eq.serial}</strong>)</span>
+                            </label>
+                            <input type="number" min="1" value="1" id="cant_${eq.nombre}" class="w-16 px-2 py-1 text-xs border rounded text-center">
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error("Error al cargar inventario:", err);
+            }
         }
 
         async function cargarInventarioGlobalAdmin() {
-            const res = await fetch('/api/inventario');
-            inventarioGlobal = await res.json();
+            try {
+                const res = await fetch('/api/inventario');
+                inventarioGlobal = await res.json();
+                if (adminSubTabActual === 'inventario') {
+                    renderizarInventarioGlobal();
+                }
+            } catch (err) {
+                console.error("Error al cargar inventario global:", err);
+            }
         }
 
         async function crearTicket(e, tipo) {
@@ -428,6 +452,7 @@
                 const data = await res.json();
                 alert(`¡Solicitud enviada con éxito! Código TKT generado: ${data.codigo}`);
                 cargarTickets();
+                if (usuarioActual.rol === 'admin') cargarInventarioGlobalAdmin();
             } else {
                 const err = await res.json();
                 alert("Error al enviar: " + (err.error || "Desconocido"));
@@ -435,19 +460,23 @@
         }
 
         async function cargarTickets() {
-            const empresaFiltro = usuarioActual.rol === 'admin' ? '' : `?empresa=${encodeURIComponent(usuarioActual.razon_social || usuarioActual.usuario)}`;
-            const res = await fetch(`/api/tickets${empresaFiltro}`);
-            ticketsGlobales = await res.json();
-            
-            if(usuarioActual.rol === 'admin') {
-                actualizarEstadisticasAdmin(ticketsGlobales);
-                if (adminSubTabActual === 'inventario') {
-                    renderizarInventarioGlobal();
-                    return;
+            try {
+                const empresaFiltro = usuarioActual.rol === 'admin' ? '' : `?empresa=${encodeURIComponent(usuarioActual.razon_social || usuarioActual.usuario)}`;
+                const res = await fetch(`/api/tickets${empresaFiltro}`);
+                ticketsGlobales = await res.json();
+                
+                if(usuarioActual.rol === 'admin') {
+                    actualizarEstadisticasAdmin(ticketsGlobales);
+                    if (adminSubTabActual === 'inventario') {
+                        renderizarInventarioGlobal();
+                        return;
+                    }
                 }
+                
+                renderizarTablaTickets(ticketsGlobales);
+            } catch (err) {
+                console.error("Error al cargar tickets:", err);
             }
-            
-            renderizarTablaTickets(ticketsGlobales);
         }
 
         function actualizarEstadisticasAdmin(tickets) {
@@ -504,7 +533,7 @@
                 <th class="p-3">Empresa / Destino</th>
                 <th class="p-3">Equipos Asignados</th>
                 <th class="p-3">Estado Logístico y Comentarios</th>
-                <th id="th-acciones" class="p-3 ${usuarioActual.rol === 'admin' ? '' : 'hidden'}">Gestión Admin</th>
+                <th class="p-3 ${usuarioActual.rol === 'admin' ? '' : 'hidden'}">Gestión Admin</th>
             `;
 
             const tbody = document.getElementById('tabla-tickets');
@@ -522,6 +551,8 @@
                     ticketsFiltrados = tickets.filter(t => t.estado_logistico === '7. Cerrado');
                     document.getElementById('titulo-tabla-tickets').innerText = "Historial de Tickets Cerrados / Finalizados";
                 }
+            } else {
+                document.getElementById('titulo-tabla-tickets').innerText = "Historial, Trazabilidad y Equipos Asignados";
             }
 
             if (ticketsFiltrados.length === 0) {
@@ -549,7 +580,6 @@
                             <p class="text-xs text-slate-500 mt-1 italic">Obs: ${t.observaciones || 'Ninguna'}</p>
                             ${comentariosHtml}
                         </td>
-                        <td class="p-3 text-xs text-slate-500">${t.fecha_creacion}</td>
                         ${adminActions}
                     </tr>
                 `;
