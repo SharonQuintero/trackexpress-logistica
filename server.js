@@ -6,7 +6,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Base de datos simulada en memoria
+// Base de datos simulada en memoria (con inventario ampliado)
 let usuarios = [
     { id: 1, usuario: 'admin', password: '123', razon_social: 'Administrador TrackExpress', nit: '900000000-1', rol: 'admin' },
     { id: 2, usuario: 'cliente1', password: '123', razon_social: 'Tecnología e Innovación S.A.S.', nit: '900123456-2', rol: 'cliente' }
@@ -16,7 +16,9 @@ let inventario = [
     { id: 1, serial: 'DL-784201', nombre: 'Laptop Dell Latitude', marca: 'Dell', modelo: 'Latitude 5420', estado: 'Disponible', empresa_actual: null },
     { id: 2, serial: 'DL-784202', nombre: 'Laptop Dell Latitude', marca: 'Dell', modelo: 'Latitude 5420', estado: 'Disponible', empresa_actual: null },
     { id: 3, serial: 'HP-992104', nombre: 'Workstation HP ProDesk', marca: 'HP', modelo: 'ProDesk 600', estado: 'Disponible', empresa_actual: null },
-    { id: 4, serial: 'LN-331092', nombre: 'ThinkPad Lenovo', marca: 'Lenovo', modelo: 'T14 Gen 2', estado: 'Disponible', empresa_actual: null }
+    { id: 4, serial: 'LN-331092', nombre: 'ThinkPad Lenovo', marca: 'Lenovo', modelo: 'T14 Gen 2', estado: 'Disponible', empresa_actual: null },
+    { id: 5, serial: 'AP-110293', nombre: 'Apple MacBook Pro', marca: 'Apple', modelo: 'M2 Pro 14"', estado: 'Disponible', empresa_actual: null },
+    { id: 6, serial: 'AS-554821', nombre: 'Asus ROG Strix', marca: 'Asus', modelo: 'G15', estado: 'Disponible', empresa_actual: null }
 ];
 
 let tickets = [];
