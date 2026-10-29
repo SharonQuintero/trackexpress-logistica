@@ -87,13 +87,33 @@
                     <h2 id="welcome-title" class="text-xl font-bold text-slate-900">Portal Logístico</h2>
                     <p class="text-sm text-slate-500">Gestión de flota de equipos, alquileres y soporte técnico corporativo.</p>
                 </div>
-                <div class="flex space-x-2 bg-slate-100 p-1 rounded-xl">
+                <div id="client-nav-tabs" class="flex space-x-2 bg-slate-100 p-1 rounded-xl">
                     <button onclick="switchTab('alquiler')" id="tab-btn-alquiler" class="px-4 py-2 text-xs font-semibold rounded-lg bg-white shadow-sm text-blue-600 transition">Solicitudes de Alquiler</button>
                     <button onclick="switchTab('soporte')" id="tab-btn-soporte" class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition">Soporte e Incidencias</button>
                 </div>
             </div>
 
-            <!-- TAB 1: SOLICITUDES DE ALQUILER -->
+            <!-- PANEL EXCLUSIVO PARA ADMINISTRADOR (Gestión general) -->
+            <div id="admin-panel-section" class="hidden bg-slate-900 text-white p-6 rounded-2xl shadow-md mb-6">
+                <h3 class="text-lg font-bold mb-2">Panel de Control de Administrador</h3>
+                <p class="text-xs text-slate-300 mb-4">Aquí puedes supervisar todas las solicitudes a nivel nacional, cambiar estados logísticos y gestionar incidencias.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                        <span class="block text-xs text-slate-400 uppercase font-semibold">Total Solicitudes</span>
+                        <span id="admin-stat-total" class="text-2xl font-bold text-blue-400">0</span>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                        <span class="block text-xs text-slate-400 uppercase font-semibold">En Proceso</span>
+                        <span id="admin-stat-proceso" class="text-2xl font-bold text-amber-400">0</span>
+                    </div>
+                    <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                        <span class="block text-xs text-slate-400 uppercase font-semibold">Finalizadas</span>
+                        <span id="admin-stat-fin" class="text-2xl font-bold text-emerald-400">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 1: SOLICITUDES DE ALQUILER (Solo Clientes) -->
             <div id="tab-alquiler" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                 <h3 class="text-lg font-bold text-slate-900 mb-4">Nueva Solicitud de Equipos</h3>
                 <form onsubmit="crearTicket(event, 'Alquiler')" class="space-y-4">
@@ -146,7 +166,7 @@
                 </form>
             </div>
 
-            <!-- TAB 2: SOPORTE TÉCNICO -->
+            <!-- TAB 2: SOPORTE TÉCNICO (Solo Clientes) -->
             <div id="tab-soporte" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hidden">
                 <h3 class="text-lg font-bold text-slate-900 mb-4">Reportar Incidencia o Soporte Técnico</h3>
                 <form onsubmit="crearTicket(event, 'Soporte')" class="space-y-4">
@@ -169,9 +189,9 @@
                 </form>
             </div>
 
-            <!-- HISTORIAL DE TICKETS -->
+            <!-- HISTORIAL / GESTIÓN DE TICKETS -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-                <h3 class="text-lg font-bold text-slate-900 mb-4">Historial de Solicitudes y Tickets</h3>
+                <h3 id="titulo-tabla-tickets" class="text-lg font-bold text-slate-900 mb-4">Historial de Solicitudes y Tickets</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
@@ -181,6 +201,7 @@
                                 <th class="p-3">Empresa / Ciudad</th>
                                 <th class="p-3">Estado Logístico</th>
                                 <th class="p-3">Fecha</th>
+                                <th id="th-acciones" class="p-3 hidden">Gestión Admin</th>
                             </tr>
                         </thead>
                         <tbody id="tabla-tickets" class="text-sm divide-y divide-slate-100">
@@ -202,7 +223,6 @@
     <script>
         let usuarioActual = null;
 
-        // Verificar sesión activa al cargar la página
         window.onload = function() {
             const sesionGuardada = localStorage.getItem('usuarioTrackExpress');
             if (sesionGuardada) {
@@ -278,7 +298,24 @@
             document.getElementById('user-info-section').classList.remove('hidden');
             document.getElementById('nav-user-welcome').innerText = `${usuarioActual.razon_social || usuarioActual.usuario} (${usuarioActual.rol.toUpperCase()})`;
             document.getElementById('welcome-title').innerText = `Portal - ${usuarioActual.razon_social || usuarioActual.usuario}`;
-            cargarInventario();
+            
+            if(usuarioActual.rol === 'admin') {
+                // Si es admin: ocultar formularios de creación, mostrar panel admin y controles de gestión
+                document.getElementById('tab-alquiler').classList.add('hidden');
+                document.getElementById('tab-soporte').classList.add('hidden');
+                document.getElementById('client-nav-tabs').classList.add('hidden');
+                document.getElementById('admin-panel-section').classList.remove('hidden');
+                document.getElementById('titulo-tabla-tickets').innerText = "Gestión Global de Solicitudes (Administrador)";
+                document.getElementById('th-acciones').classList.remove('hidden');
+            } else {
+                // Si es cliente: mostrar pestañas y formularios de solicitud
+                document.getElementById('tab-alquiler').classList.remove('hidden');
+                document.getElementById('client-nav-tabs').classList.remove('hidden');
+                document.getElementById('admin-panel-section').classList.add('hidden');
+                document.getElementById('titulo-tabla-tickets').innerText = "Historial de Solicitudes y Tickets";
+                document.getElementById('th-acciones').classList.add('hidden');
+                cargarInventario();
+            }
             cargarTickets();
         }
 
@@ -358,7 +395,32 @@
             const tickets = await res.json();
             const tbody = document.getElementById('tabla-tickets');
             tbody.innerHTML = '';
+
+            if(usuarioActual.rol === 'admin') {
+                let total = tickets.length;
+                let proceso = tickets.filter(t => t.estado_logistico && t.estado_logistico.includes('Proceso')).length;
+                let finalizadas = tickets.filter(t => t.estado_logistico && (t.estado_logistico.includes('Finalizado') || t.estado_logistico.includes('Entregado'))).length;
+                
+                document.getElementById('admin-stat-total').innerText = total;
+                document.getElementById('admin-stat-proceso').innerText = proceso;
+                document.getElementById('admin-stat-fin').innerText = finalizadas;
+            }
+
             tickets.forEach(t => {
+                let adminActions = '';
+                if(usuarioActual.rol === 'admin') {
+                    adminActions = `
+                        <td class="p-3">
+                            <select onchange="actualizarEstadoAdmin(${t.id}, this.value)" class="text-xs px-2 py-1 border rounded bg-slate-50 font-medium">
+                                <option value="1. Solicitado" ${t.estado_logistico === '1. Solicitado' ? 'selected' : ''}>1. Solicitado</option>
+                                <option value="2. En Proceso" ${t.estado_logistico === '2. En Proceso' ? 'selected' : ''}>2. En Proceso</option>
+                                <option value="3. Despachado" ${t.estado_logistico === '3. Despachado' ? 'selected' : ''}>3. Despachado</option>
+                                <option value="4. Entregado" ${t.estado_logistico === '4. Entregado' ? 'selected' : ''}>4. Entregado</option>
+                            </select>
+                        </td>
+                    `;
+                }
+
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50 transition">
                         <td class="p-3 font-semibold text-slate-900">#${t.id}</td>
@@ -366,9 +428,23 @@
                         <td class="p-3 text-slate-600">${t.cliente_empresa} <br><span class="text-xs text-slate-400">${t.ciudad_destino}</span></td>
                         <td class="p-3"><span class="px-2.5 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700 font-medium">${t.estado_logistico}</span></td>
                         <td class="p-3 text-xs text-slate-500">${t.fecha_creacion}</td>
+                        ${adminActions}
                     </tr>
                 `;
             });
+        }
+
+        async function actualizarEstadoAdmin(ticketId, nuevoEstado) {
+            const res = await fetch(`/api/tickets/${ticketId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estado_logistico: nuevoEstado })
+            });
+            if(res.ok) {
+                cargarTickets();
+            } else {
+                alert("Error al actualizar el estado logístico");
+            }
         }
     </script>
 </body>
