@@ -123,7 +123,6 @@ app.post('/api/auth/login', (req, res) => {
             return res.status(401).json({ error: "Usuario o contraseña incorrectos" });
         }
 
-        // Omitir el campo password antes de enviarlo al cliente por seguridad
         const { password: _, ...userWithoutPassword } = user;
         res.json({ message: "Login exitoso", usuario: userWithoutPassword });
     });
@@ -211,7 +210,10 @@ app.post('/api/tickets', (req, res) => {
                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '1. Solicitado', ?)`;
     
     db.run(sqlTicket, [cliente_empresa, nit, direccion_entrega || 'N/A', horario_recepcion || 'N/A', persona_recibe || 'N/A', ciudad_destino || 'Bogotá', area_destino || 'General', tiempo_alquiler || '1 Mes', tipo_ticket || 'Alquiler', categoria_incidencia || 'N/A', fechaVencStr], function(err) {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) {
+            console.error("ERROR SQL TICKET:", err.message);
+            return res.status(500).json({ error: err.message });
+        }
         const ticketId = this.lastID;
 
         if (items && items.length > 0) {
