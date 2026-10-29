@@ -202,6 +202,15 @@
     <script>
         let usuarioActual = null;
 
+        // Verificar sesión activa al cargar la página
+        window.onload = function() {
+            const sesionGuardada = localStorage.getItem('usuarioTrackExpress');
+            if (sesionGuardada) {
+                usuarioActual = JSON.parse(sesionGuardada);
+                entrarDashboard();
+            }
+        };
+
         function toggleAuthMode() {
             document.getElementById('form-login').classList.toggle('hidden');
             document.getElementById('form-registro').classList.toggle('hidden');
@@ -234,6 +243,7 @@
             const data = await res.json();
             if(res.ok) {
                 usuarioActual = data.usuario;
+                localStorage.setItem('usuarioTrackExpress', JSON.stringify(usuarioActual));
                 entrarDashboard();
             } else {
                 alert(data.error || "Credenciales incorrectas");
@@ -274,6 +284,7 @@
 
         function cerrarSesion() {
             usuarioActual = null;
+            localStorage.removeItem('usuarioTrackExpress');
             document.getElementById('dashboard-container').classList.add('hidden');
             document.getElementById('user-info-section').classList.add('hidden');
             document.getElementById('auth-container').classList.remove('hidden');
