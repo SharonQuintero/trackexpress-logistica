@@ -451,8 +451,12 @@
             if(res.ok) {
                 const data = await res.json();
                 alert(`¡Solicitud enviada con éxito! Código TKT generado: ${data.codigo}`);
-                cargarTickets();
-                if (usuarioActual.rol === 'admin') cargarInventarioGlobalAdmin();
+                
+                // Limpiar formulario de alquiler si aplica
+                e.target.reset();
+
+                // Recargar tickets instantáneamente de forma asíncrona
+                await cargarTickets();
             } else {
                 const err = await res.json();
                 alert("Error al enviar: " + (err.error || "Desconocido"));
@@ -632,8 +636,11 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ estado_logistico: nuevoEstado })
             });
-            if(res.ok) cargarTickets();
-            else alert("Error al actualizar el estado logístico");
+            if(res.ok) {
+                await cargarTickets();
+            } else {
+                alert("Error al actualizar el estado logístico");
+            }
         }
 
         async function enviarComentario(ticketId) {
@@ -655,7 +662,7 @@
 
             if(res.ok) {
                 input.value = '';
-                cargarTickets();
+                await cargarTickets();
             } else {
                 alert("Error al enviar el comentario");
             }
