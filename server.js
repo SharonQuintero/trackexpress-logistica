@@ -1,15 +1,30 @@
 const express = require('express');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Base de datos simulada en memoria (con 10 equipos de 8GB / formato compacto)
+// Base de datos simulada en memoria con contraseñas cifradas por defecto
 let usuarios = [
-    { id: 1, usuario: 'admin', password: '123', razon_social: 'Administrador TrackExpress', nit: '900000000-1', rol: 'admin' },
-    { id: 2, usuario: 'cliente1', password: '123', razon_social: 'Tecnología e Innovación S.A.S.', nit: '900123456-2', rol: 'cliente' }
+    { 
+        id: 1, 
+        usuario: 'admin', 
+        passwordHash: bcrypt.hashSync('123', 8), 
+        razon_social: 'Administrador TrackExpress', 
+        nit: '900000000-1', 
+        rol: 'admin' 
+    },
+    { 
+        id: 2, 
+        usuario: 'cliente1', 
+        passwordHash: bcrypt.hashSync('123', 8), 
+        razon_social: 'Tecnología e Innovación S.A.S.', 
+        nit: '900123456-2', 
+        rol: 'cliente' 
+    }
 ];
 
 let inventario = [
@@ -27,19 +42,21 @@ let inventario = [
 
 let tickets = [];
 
-// API Autenticación: Login
+// API Autenticación: Login con verificación de Hash
 app.post('/api/auth/login', (req, res) => {
     const { usuario, password } = req.body;
-    // Búsqueda insensible a espacios o mayúsculas si es necesario
-    const user = usuarios.find(u => u.usuario.trim() === usuario.trim() && u.password === password);
-    if (user) {
-        res.json({ mensaje: 'Login exitoso', usuario: user });
+    const user = usuarios.find(u => u.usuario.trim().toLowerCase() === usuario.trim().toLowerCase());
+    
+    if (user && bcrypt.compareSync(password, user.passwordHash)) {
+        // Excluimos el hash al enviar los datos del usuario al cliente
+        const { passwordHash, ...userSafe } = user;
+        res.json({ mensaje: 'Login exitoso', usuario: userSafe });
     } else {
         res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
     }
 });
 
-// API Autenticación: Registro corregido
+// API Autenticación: Registro con cifrado de contraseña
 app.post('/api/auth/registro', (req, res) => {
     const { usuario, password, razon_social, nit } = req.body;
     
@@ -47,7 +64,7 @@ app.post('/api/auth/registro', (req, res) => {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
 
-    const existe = usuarios.find(u => u.usuario.trim() === usuario.trim());
+    const existe = usuarios.find(u => u.usuario.trim().toLowerCase() === usuario.trim().toLowerCase());
     if (existe) {
         return res.status(400).json({ error: 'El nombre de usuario ya está en uso' });
     }
@@ -55,14 +72,15 @@ app.post('/api/auth/registro', (req, res) => {
     const nuevoUsuario = {
         id: usuarios.length + 1,
         usuario: usuario.trim(),
-        password: password,
+        passwordHash: bcrypt.hashSync(password, 8),
         razon_social: razon_social.trim(),
         nit: nit.trim(),
         rol: 'cliente'
     };
 
     usuarios.push(nuevoUsuario);
-    res.json({ mensaje: 'Registro exitoso', usuario: nuevoUsuario });
+    const { passwordHash, ...userSafe } = nuevoUsuario;
+    res.json({ mensaje: 'Registro exitoso', usuario: userSafe });
 });
 
 // API Inventario
@@ -109,7 +127,48 @@ app.post('/api/tickets', (req, res) => {
     res.json({ mensaje: 'Ticket creado con éxito', codigo: nuevoTicket.codigo_ticket, id: nuevoTicket.id });
 });
 
-// API Actualizar Estado Logístico
+// API Editar Solicitud (Solo si está en estado '1. Solicitado')
+app.put('/api/tickets/:id/editar', (req, res) => {
+    const ticketId = Number.parseInt(req.params.id, 10);
+    const data = req.body;
+    const ticket = tickets.find(t => t.id === ticketId);
+
+    if (!ticket) {
+        return res.status(404).json({ error: 'Ticket no encontrado' });
+    }
+
+    if (ticket.estado_logistico !== '1. Solicitado') {
+        return res.status(400).json({ error: 'Solo se pueden editar solicitudes que se encuentren en estado Solicitado' });
+    }
+
+    ticket.ciudad_destino = data.ciudad_destino || ticket.ciudad_destino;
+    ticket.direccion_entrega = data.direccion_entrega || ticket.direccion_entrega;
+    ticket.persona_recibe = data.persona_recibe || ticket.persona_recibe;
+    ticket.horario_recepcion = data.horario_recepcion || ticket.horario_recepcion;
+    ticket.observaciones = data.observaciones || ticket.observaciones;
+    ticket.prioridad = data.prioridad || ticket.prioridad;
+
+    res.json({ mensaje: 'Solicitud actualizada con éxito', ticket });
+});
+
+// API Cancelar / Eliminar Solicitud (Solo si está en estado '1. Solicitado')
+app.delete('/api/tickets/:id', (req, res) => {
+    const ticketId = Number.parseInt(req.params.id, 10);
+    const ticketIndex = tickets.findIndex(t => t.id === ticketId);
+
+    if (ticketIndex === -1) {
+        return res.status(404).json({ error: 'Ticket no encontrado' });
+    }
+
+    if (tickets[ticketIndex].estado_logistico !== '1. Solicitado') {
+        return res.status(400).json({ error: 'Solo se pueden cancelar solicitudes en estado Solicitado' });
+    }
+
+    tickets.splice(ticketIndex, 1);
+    res.json({ mensaje: 'Solicitud cancelada y eliminada con éxito' });
+});
+
+// API Actualizar Estado Logístico (Admin)
 app.put('/api/tickets/:id', (req, res) => {
     const ticketId = Number.parseInt(req.params.id, 10);
     const { estado_logistico } = req.body;

@@ -118,11 +118,14 @@
                 </div>
 
                 <!-- Sub-pestañas para Admin -->
-                <div class="flex flex-wrap gap-2 border-b pb-2">
-                    <button onclick="switchAdminSubTab('alquileres')" id="admin-subtab-alq" class="px-4 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white transition">📦 Gestión de Alquileres</button>
-                    <button onclick="switchAdminSubTab('soporte')" id="admin-subtab-sop" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 transition">🛠️ Tickets de Soporte</button>
-                    <button onclick="switchAdminSubTab('cerrados')" id="admin-subtab-cer" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 transition">🔒 Tickets Cerrados</button>
-                    <button onclick="switchAdminSubTab('inventario')" id="admin-subtab-inv" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 transition">💻 Inventario Global de Equipos</button>
+                <div class="flex flex-wrap gap-2 border-b pb-2 justify-between items-center">
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="switchAdminSubTab('alquileres')" id="admin-subtab-alq" class="px-4 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white transition">📦 Gestión de Alquileres</button>
+                        <button onclick="switchAdminSubTab('soporte')" id="admin-subtab-sop" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 transition">🛠️ Tickets de Soporte</button>
+                        <button onclick="switchAdminSubTab('cerrados')" id="admin-subtab-cer" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 transition">🔒 Tickets Cerrados</button>
+                        <button onclick="switchAdminSubTab('inventario')" id="admin-subtab-inv" class="px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 transition">💻 Inventario Global de Equipos</button>
+                    </div>
+                    <button onclick="exportarExcelCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow transition">📊 Exportar a Excel (CSV)</button>
                 </div>
             </div>
 
@@ -218,9 +221,14 @@
                 </form>
             </div>
 
-            <!-- CONTENEDOR DE TABLA PRINCIPAL -->
+            <!-- CONTENEDOR DE TABLA PRINCIPAL CON BUSCADOR/FILTRO -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-4">
-                <h3 id="titulo-tabla-tickets" class="text-lg font-bold text-slate-900 mb-2">Trazabilidad y Historial de Solicitudes</h3>
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <h3 id="titulo-tabla-tickets" class="text-lg font-bold text-slate-900">Trazabilidad y Historial de Solicitudes</h3>
+                    <div class="w-full sm:w-72">
+                        <input type="text" id="input-filtro-tabla" oninput="filtrarTablaTickets()" placeholder="🔍 Buscar por código, empresa..." class="w-full px-3 py-1.5 text-xs border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
                 
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -283,8 +291,6 @@
 
         function switchAdminSubTab(subtab) {
             adminSubTabActual = subtab;
-            
-            // Actualizar apariencia de botones
             document.getElementById('admin-subtab-alq').className = subtab === 'alquileres' ? "px-4 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white transition" : "px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 transition";
             document.getElementById('admin-subtab-sop').className = subtab === 'soporte' ? "px-4 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white transition" : "px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 transition";
             document.getElementById('admin-subtab-cer').className = subtab === 'cerrados' ? "px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-white transition" : "px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 transition";
@@ -483,6 +489,31 @@
             }
         }
 
+        function filtrarTablaTickets() {
+            const query = document.getElementById('input-filtro-tabla').value.toLowerCase();
+            if (adminSubTabActual === 'inventario' && usuarioActual.rol === 'admin') {
+                const filtrados = inventarioGlobal.filter(eq => 
+                    eq.serial.toLowerCase().includes(query) || 
+                    eq.nombre.toLowerCase().includes(query) || 
+                    eq.marca.toLowerCase().includes(query)
+                );
+                renderizarInventarioGlobalConFiltro(filtrados);
+            } else {
+                let base = ticketsGlobales;
+                if (usuarioActual.rol === 'admin') {
+                    if (adminSubTabActual === 'alquileres') base = ticketsGlobales.filter(t => t.tipo_ticket === 'Alquiler' && t.estado_logistico !== '7. Cerrado');
+                    else if (adminSubTabActual === 'soporte') base = ticketsGlobales.filter(t => t.tipo_ticket === 'Soporte' && t.estado_logistico !== '7. Cerrado');
+                    else if (adminSubTabActual === 'cerrados') base = ticketsGlobales.filter(t => t.estado_logistico === '7. Cerrado');
+                }
+                const filtrados = base.filter(t => 
+                    t.codigo_ticket.toLowerCase().includes(query) || 
+                    t.cliente_empresa.toLowerCase().includes(query) || 
+                    t.ciudad_destino.toLowerCase().includes(query)
+                );
+                renderizarTablaTickets(filtrados, true);
+            }
+        }
+
         function actualizarEstadisticasAdmin(tickets) {
             const total = tickets.length;
             const alquileres = tickets.filter(t => t.tipo_ticket === 'Alquiler' && t.estado_logistico !== '7. Cerrado').length;
@@ -496,6 +527,10 @@
         }
 
         function renderizarInventarioGlobal() {
+            renderizarInventarioGlobalConFiltro(inventarioGlobal);
+        }
+
+        function renderizarInventarioGlobalConFiltro(equipos) {
             document.getElementById('titulo-tabla-tickets').innerText = "Inventario Global de Equipos y Seriales";
             
             const headRow = document.getElementById('table-head-row');
@@ -510,12 +545,12 @@
             const tbody = document.getElementById('tabla-tickets');
             tbody.innerHTML = '';
 
-            if (inventarioGlobal.length === 0) {
+            if (equipos.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">No hay equipos registrados en el inventario.</td></tr>`;
                 return;
             }
 
-            inventarioGlobal.forEach(eq => {
+            equipos.forEach(eq => {
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50 transition border-b">
                         <td class="p-3 font-bold text-blue-600">${eq.serial}</td>
@@ -528,25 +563,24 @@
             });
         }
 
-        function renderizarTablaTickets(tickets) {
+        function renderizarTablaTickets(tickets, esFiltroActivo = false) {
             const esAdmin = usuarioActual.rol === 'admin';
             const headRow = document.getElementById('table-head-row');
             
-            // Reconstrucción estricta de encabezados según rol
             headRow.innerHTML = `
                 <th class="p-3">Código TKT</th>
                 <th class="p-3">Tipo / Prioridad</th>
                 <th class="p-3">Empresa / Destino</th>
                 <th class="p-3">Equipos Asignados</th>
                 <th class="p-3">Estado Logístico y Comentarios</th>
-                ${esAdmin ? '<th class="p-3">Gestión Admin</th>' : ''}
+                <th class="p-3 ${esAdmin ? '' : ''}">Acciones / Gestión</th>
             `;
 
             const tbody = document.getElementById('tabla-tickets');
             tbody.innerHTML = '';
 
             let ticketsFiltrados = tickets;
-            if (esAdmin) {
+            if (!esFiltroActivo && esAdmin) {
                 if (adminSubTabActual === 'alquileres') {
                     ticketsFiltrados = tickets.filter(t => t.tipo_ticket === 'Alquiler' && t.estado_logistico !== '7. Cerrado');
                     document.getElementById('titulo-tabla-tickets').innerText = "Gestión de Solicitudes de Alquiler";
@@ -557,17 +591,17 @@
                     ticketsFiltrados = tickets.filter(t => t.estado_logistico === '7. Cerrado');
                     document.getElementById('titulo-tabla-tickets').innerText = "Historial de Tickets Cerrados / Finalizados";
                 }
-            } else {
+            } else if (!esFiltroActivo) {
                 document.getElementById('titulo-tabla-tickets').innerText = "Historial, Trazabilidad y Equipos Asignados";
             }
 
             if (ticketsFiltrados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${esAdmin ? 6 : 5}" class="p-4 text-center text-slate-400 italic">No hay solicitudes en esta sección.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 italic">No hay solicitudes en esta sección.</td></tr>`;
                 return;
             }
 
             ticketsFiltrados.forEach(t => {
-                const adminActions = esAdmin ? construirSelectEstado(t) : '';
+                const accionesHtml = construirColumnaAcciones(t, esAdmin);
                 const comentariosHtml = construirHtmlComentarios(t);
                 const detallesHtml = construirHtmlDetalles(t);
 
@@ -586,10 +620,50 @@
                             <p class="text-xs text-slate-500 mt-1 italic">Obs: ${t.observaciones || 'Ninguna'}</p>
                             ${comentariosHtml}
                         </td>
-                        ${adminActions}
+                        <td class="p-3">${accionesHtml}</td>
                     </tr>
                 `;
             });
+        }
+
+        function construirColumnaAcciones(t, esAdmin) {
+            let html = '';
+            if (esAdmin) {
+                const estados = ["1. Solicitado", "2. Aprobado", "3. En Preparación", "4. En Ruta", "5. Entregado / En Uso", "6. Devolución Solicitada", "7. Cerrado"];
+                let options = estados.map(est => `<option value="${est}" ${t.estado_logistico === est ? 'selected' : ''}>${est}</option>`).join('');
+                html += `
+                    <div class="space-y-2">
+                        <span class="block text-[10px] text-slate-400 uppercase font-semibold">Cambiar Estado:</span>
+                        <select onchange="actualizarEstadoAdmin(${t.id}, this.value)" class="text-xs px-2 py-1 border rounded bg-slate-50 font-medium w-full">
+                            ${options}
+                        </select>
+                    </div>
+                `;
+            } else {
+                // Si es cliente y el ticket está en estado Solicitado, puede cancelar o editar
+                if (t.estado_logistico === '1. Solicitado') {
+                    html += `
+                        <div class="space-y-2">
+                            <button onclick="cancelarSolicitud(${t.id})" class="w-full bg-red-100 hover:bg-red-200 text-red-700 text-xs font-semibold px-2.5 py-1 rounded transition">Cancelar Solicitud</button>
+                        </div>
+                    `;
+                } else {
+                    html += `<span class="text-xs text-slate-400 italic">En proceso logístico (No editable)</span>`;
+                }
+            }
+            return html;
+        }
+
+        async function cancelarSolicitud(ticketId) {
+            if (!confirm("¿Estás seguro de cancelar esta solicitud?")) return;
+            const res = await fetch(`/api/tickets/${ticketId}`, { method: 'DELETE' });
+            if (res.ok) {
+                alert("Solicitud cancelada con éxito.");
+                await cargarTickets();
+            } else {
+                const err = await res.json();
+                alert(err.error || "No se pudo cancelar");
+            }
         }
 
         function construirHtmlDetalles(t) {
@@ -600,18 +674,6 @@
             });
             html += '</ul>';
             return html;
-        }
-
-        function construirSelectEstado(t) {
-            const estados = ["1. Solicitado", "2. Aprobado", "3. En Preparación", "4. En Ruta", "5. Entregado / En Uso", "6. Devolución Solicitada", "7. Cerrado"];
-            let options = estados.map(est => `<option value="${est}" ${t.estado_logistico === est ? 'selected' : ''}>${est}</option>`).join('');
-            return `
-                <td class="p-3">
-                    <select onchange="actualizarEstadoAdmin(${t.id}, this.value)" class="text-xs px-2 py-1 border rounded bg-slate-50 font-medium">
-                        ${options}
-                    </select>
-                </td>
-            `;
         }
 
         function construirHtmlComentarios(t) {
@@ -668,6 +730,24 @@
             } else {
                 alert("Error al enviar el comentario");
             }
+        }
+
+        function exportarExcelCSV() {
+            if (ticketsGlobales.length === 0) {
+                alert("No hay tickets para exportar.");
+                return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,Codigo,Tipo,Empresa,Ciudad,Estado,Prioridad,FechaCreacion\n";
+            ticketsGlobales.forEach(t => {
+                csvContent += `"${t.codigo_ticket}","${t.tipo_ticket}","${t.cliente_empresa}","${t.ciudad_destino}","${t.estado_logistico}","${t.prioridad}","${t.fecha_creacion}"\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "reporte_logistica_trackexpress.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>
