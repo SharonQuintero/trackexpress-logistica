@@ -45,7 +45,6 @@ db.serialize(() => {
         fecha_vencimiento TEXT DEFAULT NULL
     )`);
 
-    // Creación de tabla tickets con automatización de columnas por si ya existía la tabla previa
     db.run(`CREATE TABLE IF NOT EXISTS tickets (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         cliente_empresa TEXT NOT NULL,
@@ -63,7 +62,6 @@ db.serialize(() => {
         fecha_vencimiento TEXT,
         fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP
     )`, () => {
-        // Migración automática de esquema por si SQLite no tenía estas columnas
         db.run(`ALTER TABLE tickets ADD COLUMN tipo_ticket TEXT DEFAULT 'Alquiler'`, () => {});
         db.run(`ALTER TABLE tickets ADD COLUMN categoria_incidencia TEXT DEFAULT 'N/A'`, () => {});
         db.run(`ALTER TABLE tickets ADD COLUMN fecha_vencimiento TEXT`, () => {});
@@ -88,7 +86,6 @@ db.serialize(() => {
         FOREIGN KEY (ticket_id) REFERENCES tickets(id)
     )`);
 
-    // Crear usuario admin por defecto con contraseña hasheada
     db.get("SELECT * FROM usuarios WHERE usuario = 'admin'", async (err, row) => {
         if (!row) {
             const hashedPassword = await bcrypt.hash('admin123', 10);
@@ -113,7 +110,6 @@ db.serialize(() => {
     });
 });
 
-// Login seguro con bcrypt
 app.post('/api/auth/login', (req, res) => {
     const { usuario, password } = req.body;
     if (!usuario || !password) {
@@ -135,7 +131,6 @@ app.post('/api/auth/login', (req, res) => {
     });
 });
 
-// Registro de usuarios/clientes
 app.post('/api/auth/registro', async (req, res) => {
     const { usuario, password, nit, razon_social, contacto_persona, telefono, correo, direccion } = req.body;
     if (!usuario || !password) return res.status(400).json({ error: "Completa los campos obligatorios" });
@@ -264,7 +259,7 @@ app.get('/api/tickets/:id/detalle', (req, res) => {
         
         db.all("SELECT * FROM ticket_detalles WHERE ticket_id = ?", [ticketId], (errDet, detalles) => {
             ticket.detalles = detalles || [];
-            db.all("SELECT * FROM comentarios_tickets WHERE ticket_id = ? ORDER BY fecha ASC", [err2, comentarios] => {
+            db.all("SELECT * FROM comentarios_tickets WHERE ticket_id = ? ORDER BY fecha ASC", [ticketId], (err2, comentarios) => {
                 if (err2) return res.status(500).json({ error: err2.message });
                 res.json({ ticket, comentarios });
             });
