@@ -30,7 +30,8 @@ let tickets = [];
 // API Autenticación: Login
 app.post('/api/auth/login', (req, res) => {
     const { usuario, password } = req.body;
-    const user = usuarios.find(u => u.usuario === usuario && u.password === password);
+    // Búsqueda insensible a espacios o mayúsculas si es necesario
+    const user = usuarios.find(u => u.usuario.trim() === usuario.trim() && u.password === password);
     if (user) {
         res.json({ mensaje: 'Login exitoso', usuario: user });
     } else {
@@ -38,20 +39,28 @@ app.post('/api/auth/login', (req, res) => {
     }
 });
 
-// API Autenticación: Registro
+// API Autenticación: Registro corregido
 app.post('/api/auth/registro', (req, res) => {
     const { usuario, password, razon_social, nit } = req.body;
-    if (usuarios.find(u => u.usuario === usuario)) {
+    
+    if (!usuario || !password || !razon_social || !nit) {
+        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    }
+
+    const existe = usuarios.find(u => u.usuario.trim() === usuario.trim());
+    if (existe) {
         return res.status(400).json({ error: 'El nombre de usuario ya está en uso' });
     }
+
     const nuevoUsuario = {
         id: usuarios.length + 1,
-        usuario,
-        password,
-        razon_social,
-        nit,
+        usuario: usuario.trim(),
+        password: password,
+        razon_social: razon_social.trim(),
+        nit: nit.trim(),
         rol: 'cliente'
     };
+
     usuarios.push(nuevoUsuario);
     res.json({ mensaje: 'Registro exitoso', usuario: nuevoUsuario });
 });
