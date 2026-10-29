@@ -6,19 +6,23 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Base de datos simulada en memoria (con inventario ampliado)
+// Base de datos simulada en memoria (con 10 equipos detallados de 8GB y diseño compacto)
 let usuarios = [
     { id: 1, usuario: 'admin', password: '123', razon_social: 'Administrador TrackExpress', nit: '900000000-1', rol: 'admin' },
     { id: 2, usuario: 'cliente1', password: '123', razon_social: 'Tecnología e Innovación S.A.S.', nit: '900123456-2', rol: 'cliente' }
 ];
 
 let inventario = [
-    { id: 1, serial: 'DL-784201', nombre: 'Laptop Dell Latitude', marca: 'Dell', modelo: 'Latitude 5420', estado: 'Disponible', empresa_actual: null },
-    { id: 2, serial: 'DL-784202', nombre: 'Laptop Dell Latitude', marca: 'Dell', modelo: 'Latitude 5420', estado: 'Disponible', empresa_actual: null },
-    { id: 3, serial: 'HP-992104', nombre: 'Workstation HP ProDesk', marca: 'HP', modelo: 'ProDesk 600', estado: 'Disponible', empresa_actual: null },
-    { id: 4, serial: 'LN-331092', nombre: 'ThinkPad Lenovo', marca: 'Lenovo', modelo: 'T14 Gen 2', estado: 'Disponible', empresa_actual: null },
-    { id: 5, serial: 'AP-110293', nombre: 'Apple MacBook Pro', marca: 'Apple', modelo: 'M2 Pro 14"', estado: 'Disponible', empresa_actual: null },
-    { id: 6, serial: 'AS-554821', nombre: 'Asus ROG Strix', marca: 'Asus', modelo: 'G15', estado: 'Disponible', empresa_actual: null }
+    { id: 1, serial: 'DL-784201', nombre: 'Laptop Dell Latitude 5420', marca: 'Dell', modelo: '14" 8GB RAM SSD 256GB', estado: 'Disponible', empresa_actual: null },
+    { id: 2, serial: 'DL-784202', nombre: 'Laptop Dell Latitude 3420', marca: 'Dell', modelo: 'Compacta 14" 8GB RAM', estado: 'Disponible', empresa_actual: null },
+    { id: 3, serial: 'HP-992104', nombre: 'Workstation HP ProBook 440', marca: 'HP', modelo: '14" 8GB RAM Core i5', estado: 'Disponible', empresa_actual: null },
+    { id: 4, serial: 'LN-331092', nombre: 'ThinkPad Lenovo T14 Gen 2', marca: 'Lenovo', modelo: 'Ultrabook 14" 8GB RAM', estado: 'Disponible', empresa_actual: null },
+    { id: 5, serial: 'AP-110293', nombre: 'Apple MacBook Air M1', marca: 'Apple', modelo: 'Retina 13" 8GB RAM', estado: 'Disponible', empresa_actual: null },
+    { id: 6, serial: 'AS-554821', nombre: 'Asus ExpertBook B1', marca: 'Asus', modelo: 'Liviana 15.6" 8GB RAM', estado: 'Disponible', empresa_actual: null },
+    { id: 7, serial: 'AC-883920', nombre: 'Acer TravelMate P2', marca: 'Acer', modelo: 'Corporativa 14" 8GB RAM', estado: 'Disponible', empresa_actual: null },
+    { id: 8, serial: 'DL-784203', nombre: 'Mini PC Dell OptiPlex 3090', marca: 'Dell', modelo: 'Micro Form Factor 8GB', estado: 'Disponible', empresa_actual: null },
+    { id: 9, serial: 'HP-992105', nombre: 'Mini Desktop HP ProDesk 400', marca: 'HP', modelo: 'Compacto G6 8GB RAM', estado: 'Disponible', empresa_actual: null },
+    { id: 10, serial: 'LN-331093', nombre: 'Lenovo ThinkCentre M75q', marca: 'Lenovo', modelo: 'Tiny Desktop 8GB RAM', estado: 'Disponible', empresa_actual: null }
 ];
 
 let tickets = [];
