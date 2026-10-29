@@ -185,7 +185,6 @@ app.get('/api/tickets', async (req, res) => {
 
         const tickets = await dbAll(sql, params);
 
-        // CORREGIDO: Uso de Promise.all en lugar de await dentro de bucle for...of
         const ticketsCompletos = await Promise.all(
             tickets.map(async (t) => {
                 const detalles = await dbAll("SELECT * FROM ticket_detalles WHERE ticket_id = ?", [t.id]);
@@ -224,19 +223,22 @@ app.post('/api/tickets', async (req, res) => {
         const sqlTicket = `INSERT INTO tickets (cliente_empresa, nit, direccion_entrega, horario_recepcion, persona_recibe, ciudad_destino, area_destino, tiempo_alquiler, tipo_ticket, categoria_incidencia, estado_logistico, prioridad, observaciones, fecha_deseada, fecha_vencimiento) 
                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '1. Solicitado', ?, ?, ?, ?)`;
         
-        const result = await dbRun(sqlTicket, [
-            cliente_empresa, nit, direccion_entrega || 'N/A', horario_recepcion || 'N/A', persona_recibe || 'N/A', 
-            ciudad_destino || 'Bogotá', area_destino || 'General', tiempo_alquiler || '1 Mes', tipo_ticket || 'Alquiler', 
-            categoria_incidencia || 'N/A', prioridad || 'Normal', observaciones || '', 
-            fecha_deseada || new Date().toISOString().split('T')[0], fechaVencStr
-        ]);
+        const ticketId = await new Promise((resolve, reject) => {
+            db.run(sqlTicket, [
+                cliente_empresa, nit, direccion_entrega || 'N/A', horario_recepcion || 'N/A', persona_recibe || 'N/A', 
+                ciudad_destino || 'Bogotá', area_destino || 'General', tiempo_alquiler || '1 Mes', tipo_ticket || 'Alquiler', 
+                categoria_incidencia || 'N/A', prioridad || 'Normal', observaciones || '', 
+                fecha_deseada || new Date().toISOString().split('T')[0], fechaVencStr
+            ], function(err) {
+                if (err) reject(err);
+                else resolve(this.lastID);
+            });
+        });
 
-        const ticketId = result.lastID;
         const codigoFormateado = `TKT-2026-${String(ticketId).padStart(4, '0')}`;
         await dbRun("UPDATE tickets SET codigo_ticket = ? WHERE id = ?", [codigoFormateado, ticketId]);
 
         if (items && items.length > 0) {
-            // CORREGIDO: Uso de Promise.all para inserciones concurrentes seguras
             await Promise.all(
                 items.map(async (item) => {
                     await dbRun("INSERT INTO ticket_detalles (ticket_id, equipo_nombre, cantidad) VALUES (?, ?, ?)", [ticketId, item.equipo_nombre, item.cantidad]);
