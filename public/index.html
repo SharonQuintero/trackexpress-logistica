@@ -218,7 +218,7 @@
                 </form>
             </div>
 
-            <!-- CONTENEDOR DE TABLA (Tickets o Inventario Global) -->
+            <!-- CONTENEDOR DE TABLA PRINCIPAL -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-4">
                 <h3 id="titulo-tabla-tickets" class="text-lg font-bold text-slate-900 mb-2">Trazabilidad y Historial de Solicitudes</h3>
                 
@@ -283,6 +283,8 @@
 
         function switchAdminSubTab(subtab) {
             adminSubTabActual = subtab;
+            
+            // Actualizar apariencia de botones
             document.getElementById('admin-subtab-alq').className = subtab === 'alquileres' ? "px-4 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white transition" : "px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 transition";
             document.getElementById('admin-subtab-sop').className = subtab === 'soporte' ? "px-4 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white transition" : "px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 transition";
             document.getElementById('admin-subtab-cer').className = subtab === 'cerrados' ? "px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-white transition" : "px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 transition";
@@ -351,7 +353,9 @@
             document.getElementById('tab-soporte').classList.add('hidden');
             document.getElementById('client-nav-tabs').classList.toggle('hidden', esAdmin);
             document.getElementById('admin-panel-section').classList.toggle('hidden', !esAdmin);
-            document.getElementById('th-acciones').classList.toggle('hidden', !esAdmin);
+            
+            const thAcciones = document.getElementById('th-acciones');
+            if (thAcciones) thAcciones.classList.toggle('hidden', !esAdmin);
 
             if (!esAdmin) {
                 cargarInventario();
@@ -451,11 +455,7 @@
             if(res.ok) {
                 const data = await res.json();
                 alert(`¡Solicitud enviada con éxito! Código TKT generado: ${data.codigo}`);
-                
-                // Limpiar formulario de alquiler si aplica
                 e.target.reset();
-
-                // Recargar tickets instantáneamente de forma asíncrona
                 await cargarTickets();
             } else {
                 const err = await res.json();
@@ -497,12 +497,12 @@
 
         function renderizarInventarioGlobal() {
             document.getElementById('titulo-tabla-tickets').innerText = "Inventario Global de Equipos y Seriales";
-            document.getElementById('th-acciones').classList.add('hidden');
+            
             const headRow = document.getElementById('table-head-row');
             headRow.innerHTML = `
                 <th class="p-3">Serial</th>
                 <th class="p-3">Equipo / Nombre</th>
-                <th class="p-3">Marca y Modelo (8GB / Compacto)</th>
+                <th class="p-3">Marca y Especificaciones</th>
                 <th class="p-3">Estado Actual</th>
                 <th class="p-3">Empresa Asignada</th>
             `;
@@ -529,22 +529,24 @@
         }
 
         function renderizarTablaTickets(tickets) {
-            document.getElementById('th-acciones').classList.toggle('hidden', usuarioActual.rol !== 'admin');
+            const esAdmin = usuarioActual.rol === 'admin';
             const headRow = document.getElementById('table-head-row');
+            
+            // Reconstrucción estricta de encabezados según rol
             headRow.innerHTML = `
                 <th class="p-3">Código TKT</th>
                 <th class="p-3">Tipo / Prioridad</th>
                 <th class="p-3">Empresa / Destino</th>
                 <th class="p-3">Equipos Asignados</th>
                 <th class="p-3">Estado Logístico y Comentarios</th>
-                <th class="p-3 ${usuarioActual.rol === 'admin' ? '' : 'hidden'}">Gestión Admin</th>
+                ${esAdmin ? '<th class="p-3">Gestión Admin</th>' : ''}
             `;
 
             const tbody = document.getElementById('tabla-tickets');
             tbody.innerHTML = '';
 
             let ticketsFiltrados = tickets;
-            if (usuarioActual.rol === 'admin') {
+            if (esAdmin) {
                 if (adminSubTabActual === 'alquileres') {
                     ticketsFiltrados = tickets.filter(t => t.tipo_ticket === 'Alquiler' && t.estado_logistico !== '7. Cerrado');
                     document.getElementById('titulo-tabla-tickets').innerText = "Gestión de Solicitudes de Alquiler";
@@ -560,12 +562,12 @@
             }
 
             if (ticketsFiltrados.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400 italic">No hay solicitudes en esta sección.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${esAdmin ? 6 : 5}" class="p-4 text-center text-slate-400 italic">No hay solicitudes en esta sección.</td></tr>`;
                 return;
             }
 
             ticketsFiltrados.forEach(t => {
-                const adminActions = usuarioActual.rol === 'admin' ? construirSelectEstado(t) : '';
+                const adminActions = esAdmin ? construirSelectEstado(t) : '';
                 const comentariosHtml = construirHtmlComentarios(t);
                 const detallesHtml = construirHtmlDetalles(t);
 

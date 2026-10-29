@@ -6,7 +6,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Base de datos simulada en memoria (con 10 equipos detallados de 8GB y diseño compacto)
+// Base de datos simulada en memoria (con 10 equipos de 8GB / formato compacto)
 let usuarios = [
     { id: 1, usuario: 'admin', password: '123', razon_social: 'Administrador TrackExpress', nit: '900000000-1', rol: 'admin' },
     { id: 2, usuario: 'cliente1', password: '123', razon_social: 'Tecnología e Innovación S.A.S.', nit: '900123456-2', rol: 'cliente' }
@@ -61,7 +61,7 @@ app.get('/api/inventario', (req, res) => {
     res.json(inventario);
 });
 
-// API Obtener Tickets (Filtra por empresa si es cliente)
+// API Obtener Tickets
 app.get('/api/tickets', (req, res) => {
     const { empresa } = req.query;
     if (empresa) {
@@ -100,7 +100,7 @@ app.post('/api/tickets', (req, res) => {
     res.json({ mensaje: 'Ticket creado con éxito', codigo: nuevoTicket.codigo_ticket, id: nuevoTicket.id });
 });
 
-// API Actualizar Estado Logístico (Admin)
+// API Actualizar Estado Logístico
 app.put('/api/tickets/:id', (req, res) => {
     const ticketId = Number.parseInt(req.params.id, 10);
     const { estado_logistico } = req.body;
@@ -114,7 +114,7 @@ app.put('/api/tickets/:id', (req, res) => {
     }
 });
 
-// API Agregar Comentario a Ticket
+// API Agregar Comentario
 app.post('/api/tickets/:id/comentarios', (req, res) => {
     const ticketId = Number.parseInt(req.params.id, 10);
     const { autor, rol, comentario } = req.body;
