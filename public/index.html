@@ -30,23 +30,20 @@
     <!-- CONTENIDO PRINCIPAL -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full flex items-center justify-center">
 
-        <!-- SECCIÓN DE AUTENTICACIÓN DIVIDIDA (ESTILO DE LA IMAGEN) -->
+        <!-- SECCIÓN DE AUTENTICACIÓN DIVIDIDA -->
         <div id="auth-container" class="w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden my-6">
             <div class="grid grid-cols-1 md:grid-cols-2 min-h-[520px]">
                 
                 <!-- PANEL IZQUIERDO: BANNER CON LOGO E INTRODUCCIÓN LLAMATIVA -->
                 <div class="bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-700 text-white p-8 md:p-12 flex flex-col justify-between relative overflow-hidden">
-                    <!-- Decoración de fondo suave -->
                     <div class="absolute -bottom-10 -left-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
                     <div class="absolute -top-10 -right-10 w-48 h-48 bg-cyan-300/20 rounded-full blur-xl pointer-events-none"></div>
 
-                    <!-- Logo Corporativo en la parte superior -->
                     <div class="flex items-center space-x-3 z-10">
                         <div class="bg-white text-blue-600 p-2.5 rounded-xl font-extrabold text-xl shadow-lg tracking-wider">TE</div>
                         <span class="text-2xl font-bold tracking-tight text-white">TrackExpress</span>
                     </div>
 
-                    <!-- Mensaje de Introducción Breve para Clientes -->
                     <div class="my-8 z-10 space-y-4">
                         <h2 class="text-3xl md:text-4xl font-extrabold leading-tight tracking-tight">
                             Bienvenido a <br><span class="text-cyan-200">TrackExpress</span>
@@ -56,7 +53,6 @@
                         </p>
                     </div>
 
-                    <!-- Footer del Banner -->
                     <div class="text-xs text-cyan-200/80 font-medium z-10">
                         Tecnología & Logística Corporativa &copy; 2026
                     </div>
@@ -97,8 +93,8 @@
                         </div>
 
                         <div>
-                            <label for="reg-usuario" class="block text-xs font-semibold text-slate-600 uppercase mb-1">Usuario</label>
-                            <input type="text" id="reg-usuario" required placeholder="Usuario para iniciar sesión" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm">
+                            <label for="reg-usuario" class="block text-xs font-semibold text-slate-600 uppercase mb-1">Usuario / Nombre de Persona</label>
+                            <input type="text" id="reg-usuario" required placeholder="Ej: Carlos Pérez" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm">
                         </div>
                         <div>
                             <label for="reg-password" class="block text-xs font-semibold text-slate-600 uppercase mb-1">Contraseña</label>
@@ -124,7 +120,7 @@
             </div>
         </div>
 
-        <!-- PANEL DE APLICACIÓN (CUANDO SE INICIA SESIÓN) -->
+        <!-- PANEL DE APLICACIÓN -->
         <div id="dashboard-container" class="hidden space-y-6 w-full">
             
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-100 gap-4">
@@ -140,7 +136,6 @@
 
             <!-- PANEL EXCLUSIVO PARA ADMINISTRADOR -->
             <div id="admin-panel-section" class="hidden space-y-6">
-                <!-- Tarjetas de Estadísticas Admin -->
                 <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-md space-y-4">
                     <h3 class="text-lg font-bold">Panel de Control General (Administrador)</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-center">
@@ -163,7 +158,6 @@
                     </div>
                 </div>
 
-                <!-- Sub-pestañas para Admin -->
                 <div class="flex flex-wrap gap-2 border-b pb-2 justify-between items-center">
                     <div class="flex flex-wrap gap-2">
                         <button onclick="switchAdminSubTab('alquileres')" id="admin-subtab-alq" class="px-4 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white transition">📦 Gestión de Alquileres</button>
@@ -396,11 +390,19 @@
             document.getElementById('dashboard-container').classList.remove('hidden');
             document.getElementById('user-info-section').classList.remove('hidden');
             
-            const nombreMostrar = usuarioActual.razon_social || usuarioActual.usuario;
-            document.getElementById('nav-user-welcome').innerText = `${nombreMostrar} (${usuarioActual.rol.toUpperCase()})`;
-            document.getElementById('welcome-title').innerText = `Portal - ${nombreMostrar}`;
-            
+            // AQUÍ SE MUESTRA EL NOMBRE DE LA PERSONA Y LA EMPRESA EN EL HEADER
             const esAdmin = usuarioActual.rol === 'admin';
+            let etiquetaIdentidad = "";
+            if (esAdmin) {
+                etiquetaIdentidad = `${usuarioActual.razon_social} (ADMIN)`;
+            } else {
+                // Muestra la empresa junto con el nombre del usuario/persona que se registró
+                etiquetaIdentidad = `${usuarioActual.razon_social} - ${usuarioActual.usuario} (CLIENTE)`;
+            }
+
+            document.getElementById('nav-user-welcome').innerText = etiquetaIdentidad;
+            document.getElementById('welcome-title').innerText = `Portal - ${usuarioActual.razon_social}`;
+            
             document.getElementById('tab-alquiler').classList.toggle('hidden', esAdmin);
             document.getElementById('tab-soporte').classList.add('hidden');
             document.getElementById('client-nav-tabs').classList.toggle('hidden', esAdmin);
