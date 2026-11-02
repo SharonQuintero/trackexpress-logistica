@@ -229,7 +229,7 @@
                     <div class="mt-4 pt-4 border-t border-slate-100">
                         <span class="block text-xs font-semibold text-slate-600 uppercase mb-2">Selección de Equipos de la Flota (Con Serial Individual - 8GB / Compactos):</span>
                         <div id="inventario-checkboxes" class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <!-- Se carga dinámicamente -->
+                            <!-- Se carga dinámicamente con inputs en blanco -->
                         </div>
                     </div>
 
@@ -390,13 +390,11 @@
             document.getElementById('dashboard-container').classList.remove('hidden');
             document.getElementById('user-info-section').classList.remove('hidden');
             
-            // AQUÍ SE MUESTRA EL NOMBRE DE LA PERSONA Y LA EMPRESA EN EL HEADER
             const esAdmin = usuarioActual.rol === 'admin';
             let etiquetaIdentidad = "";
             if (esAdmin) {
                 etiquetaIdentidad = `${usuarioActual.razon_social} (ADMIN)`;
             } else {
-                // Muestra la empresa junto con el nombre del usuario/persona que se registró
                 etiquetaIdentidad = `${usuarioActual.razon_social} - ${usuarioActual.usuario} (CLIENTE)`;
             }
 
@@ -445,7 +443,8 @@
                                 <input type="checkbox" name="equipo_sel" value="${eq.nombre}" class="rounded text-blue-600 focus:ring-blue-500">
                                 <span>${eq.nombre} <br><small class="text-slate-500">${eq.modelo}</small> (Serial: <strong class="text-blue-600">${eq.serial}</strong>)</span>
                             </label>
-                            <input type="number" min="1" value="1" id="cant_${eq.nombre}" class="w-16 px-2 py-1 text-xs border rounded text-center">
+                            <!-- El input de cantidad ahora inicia en blanco (value="") -->
+                            <input type="number" min="1" value="" placeholder="Cant" id="cant_${eq.nombre}" class="w-16 px-2 py-1 text-xs border rounded text-center focus:ring-2 focus:ring-blue-500 outline-none">
                         </div>
                     `;
                 });
@@ -472,11 +471,17 @@
             if(tipo === 'Alquiler') {
                 const checkboxes = document.querySelectorAll('input[name="equipo_sel"]:checked');
                 checkboxes.forEach(cb => {
-                    const cant = document.getElementById(`cant_${cb.value}`).value;
-                    items.push({ equipo_nombre: cb.value, cantidad: Number.parseInt(cant, 10) });
+                    const cantInput = document.getElementById(`cant_${cb.value}`).value;
+                    const cant = Number.parseInt(cantInput, 10);
+                    // Validar que si marca el equipo, escriba una cantidad válida mayor a 0
+                    if (!cant || cant <= 0) {
+                        alert(`Por favor ingresa una cantidad válida para el equipo: ${cb.value}`);
+                        throw new Error("Cantidad inválida");
+                    }
+                    items.push({ equipo_nombre: cb.value, cantidad: cant });
                 });
                 if(items.length === 0) {
-                    alert("Debes seleccionar al menos un equipo con su serial.");
+                    alert("Debes seleccionar al menos un equipo y especificar su cantidad.");
                     return;
                 }
             } else {
@@ -510,6 +515,7 @@
                 const data = await res.json();
                 alert(`¡Solicitud enviada con éxito! Código TKT generado: ${data.codigo}`);
                 e.target.reset();
+                await cargarInventario(); // Recarga los checkboxes con los inputs en blanco
                 await cargarTickets();
             } else {
                 const err = await res.json();
