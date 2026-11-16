@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrackExpress - Portal Logístico Corporativo</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -34,7 +33,6 @@
         <div id="auth-container" class="w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden my-6">
             <div class="grid grid-cols-1 md:grid-cols-2 min-h-[520px]">
                 
-                <!-- PANEL IZQUIERDO: BANNER CON LOGO E INTRODUCCIÓN LLAMATIVA -->
                 <div class="bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-700 text-white p-8 md:p-12 flex flex-col justify-between relative overflow-hidden">
                     <div class="absolute -bottom-10 -left-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
                     <div class="absolute -top-10 -right-10 w-48 h-48 bg-cyan-300/20 rounded-full blur-xl pointer-events-none"></div>
@@ -58,40 +56,31 @@
                     </div>
                 </div>
 
-                <!-- PANEL DERECHO: FORMULARIOS DE LOGIN Y REGISTRO -->
                 <div class="p-8 md:p-12 flex flex-col justify-center bg-white">
-
-                    <!-- FORMULARIO DE LOGIN -->
                     <form id="form-login" onsubmit="handleLogin(event)" class="space-y-5">
                         <div>
                             <h3 class="text-2xl font-bold text-slate-900">Iniciar Sesión</h3>
                             <p class="text-xs text-slate-500 mt-1">Ingresa tus credenciales corporativas para acceder al portal.</p>
                         </div>
-
                         <div>
                             <label for="login-usuario" class="block text-xs font-semibold text-slate-600 uppercase mb-1">Usuario</label>
                             <input type="text" id="login-usuario" required placeholder="Nombre de usuario" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition">
                         </div>
-
                         <div>
                             <label for="login-password" class="block text-xs font-semibold text-slate-600 uppercase mb-1">Contraseña</label>
                             <input type="password" id="login-password" required placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition">
                         </div>
-
                         <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition text-sm">Ingresar al Portal</button>
-
                         <div class="text-center pt-2">
                             <button type="button" onclick="toggleAuthMode()" class="text-xs text-blue-600 hover:underline font-medium">¿Empresa nueva? Regístrate aquí</button>
                         </div>
                     </form>
 
-                    <!-- FORMULARIO DE REGISTRO -->
                     <form id="form-registro" onsubmit="handleRegistro(event)" class="space-y-4 hidden">
                         <div>
                             <h3 class="text-2xl font-bold text-slate-900">Registro de Empresa</h3>
                             <p class="text-xs text-slate-500 mt-1">Crea una cuenta corporativa para solicitar alquiler y soporte.</p>
                         </div>
-
                         <div>
                             <label for="reg-usuario" class="block text-xs font-semibold text-slate-600 uppercase mb-1">Usuario / Nombre de Persona</label>
                             <input type="text" id="reg-usuario" required placeholder="Ej: Carlos Pérez" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm">
@@ -108,14 +97,11 @@
                             <label for="reg-nit" class="block text-xs font-semibold text-slate-600 uppercase mb-1">NIT</label>
                             <input type="text" id="reg-nit" required placeholder="900123456-7" class="w-full px-3 py-2 border rounded-lg text-sm">
                         </div>
-
                         <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-xl shadow-md transition text-sm">Registrar Cuenta</button>
-
                         <div class="text-center pt-2">
                             <button type="button" onclick="toggleAuthMode()" class="text-xs text-blue-600 hover:underline font-medium">¿Ya tienes cuenta? Inicia sesión</button>
                         </div>
                     </form>
-
                 </div>
             </div>
         </div>
@@ -225,11 +211,10 @@
                         </div>
                     </div>
 
-                    <!-- Selección de Equipos por Serial -->
                     <div class="mt-4 pt-4 border-t border-slate-100">
-                        <span class="block text-xs font-semibold text-slate-600 uppercase mb-2">Selección de Equipos de la Flota (Con Serial Individual - 8GB / Compactos):</span>
+                        <span class="block text-xs font-semibold text-slate-600 uppercase mb-2">Selección de Equipos de la Flota (Con Serial Individual - Solo Disponibles):</span>
                         <div id="inventario-checkboxes" class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <!-- Se carga dinámicamente con inputs en blanco -->
+                            <!-- Se carga dinámicamente -->
                         </div>
                     </div>
 
@@ -261,7 +246,7 @@
                 </form>
             </div>
 
-            <!-- CONTENEDOR DE TABLA PRINCIPAL CON BUSCADOR -->
+            <!-- TABLA DE TICKETS -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
                     <h3 id="titulo-tabla-tickets" class="text-lg font-bold text-slate-900">Trazabilidad y Historial de Solicitudes</h3>
@@ -278,7 +263,7 @@
                                 <th class="p-3">Tipo / Prioridad</th>
                                 <th class="p-3">Empresa / Destino</th>
                                 <th class="p-3">Equipos Asignados</th>
-                                <th class="p-3">Estado Logístico y Comentarios</th>
+                                <th class="p-3">Estado Logístico y Comentarios (Obligatorio para cambiar estado)</th>
                                 <th id="th-acciones" class="p-3 hidden">Gestión Admin</th>
                             </tr>
                         </thead>
@@ -337,7 +322,7 @@
             document.getElementById('admin-subtab-inv').className = subtab === 'inventario' ? "px-4 py-2 text-xs font-bold rounded-lg bg-purple-600 text-white transition" : "px-4 py-2 text-xs font-bold rounded-lg bg-slate-200 text-slate-700 transition";
 
             if (subtab === 'inventario') {
-                renderizarInventarioGlobal();
+                cargarInventarioGlobalAdmin();
             } else {
                 renderizarTablaTickets(ticketsGlobales);
             }
@@ -345,31 +330,35 @@
 
         async function handleLogin(e) {
             e.preventDefault();
-            const usuario = document.getElementById('login-usuario').value;
-            const password = document.getElementById('login-password').value;
+            const usuario = document.getElementById('login-usuario').value.trim();
+            const password = document.getElementById('login-password').value.trim();
 
-            const res = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ usuario, password })
-            });
-            const data = await res.json();
-            if(res.ok) {
-                usuarioActual = data.usuario;
-                localStorage.setItem('usuarioTrackExpress', JSON.stringify(usuarioActual));
-                entrarDashboard();
-            } else {
-                alert(data.error || "Credenciales incorrectas");
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario, password })
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    usuarioActual = data.usuario;
+                    localStorage.setItem('usuarioTrackExpress', JSON.stringify(usuarioActual));
+                    entrarDashboard();
+                } else {
+                    alert(data.error || "Credenciales incorrectas");
+                }
+            } catch (err) {
+                alert("Error de conexión con el servidor.");
             }
         }
 
         async function handleRegistro(e) {
             e.preventDefault();
             const payload = {
-                usuario: document.getElementById('reg-usuario').value,
-                password: document.getElementById('reg-password').value,
-                razon_social: document.getElementById('reg-razon').value,
-                nit: document.getElementById('reg-nit').value
+                usuario: document.getElementById('reg-usuario').value.trim(),
+                password: document.getElementById('reg-password').value.trim(),
+                razon_social: document.getElementById('reg-razon').value.trim(),
+                nit: document.getElementById('reg-nit').value.trim()
             };
             const res = await fetch('/api/auth/registro', {
                 method: 'POST',
@@ -391,12 +380,9 @@
             document.getElementById('user-info-section').classList.remove('hidden');
             
             const esAdmin = usuarioActual.rol === 'admin';
-            let etiquetaIdentidad = "";
-            if (esAdmin) {
-                etiquetaIdentidad = `${usuarioActual.razon_social} (ADMIN)`;
-            } else {
-                etiquetaIdentidad = `${usuarioActual.razon_social} - ${usuarioActual.usuario} (CLIENTE)`;
-            }
+            let etiquetaIdentidad = esAdmin
+                ? `${usuarioActual.razon_social} (ADMIN)`
+                : `${usuarioActual.razon_social} - ${usuarioActual.usuario} (CLIENTE)`;
 
             document.getElementById('nav-user-welcome').innerText = etiquetaIdentidad;
             document.getElementById('welcome-title').innerText = `Portal - ${usuarioActual.razon_social}`;
@@ -432,18 +418,20 @@
                 const contenedor = document.getElementById('inventario-checkboxes');
                 if (!contenedor) return;
                 contenedor.innerHTML = '';
-                if (equipos.length === 0) {
-                    contenedor.innerHTML = '<p class="text-xs text-slate-400 italic">No hay equipos disponibles en este momento.</p>';
+                
+                const disponibles = equipos.filter(eq => eq.estado === 'Disponible');
+
+                if (disponibles.length === 0) {
+                    contenedor.innerHTML = '<p class="text-xs text-slate-400 italic">No hay equipos disponibles en bodega en este momento.</p>';
                     return;
                 }
-                equipos.forEach(eq => {
+                disponibles.forEach(eq => {
                     contenedor.innerHTML += `
                         <div class="flex items-center justify-between bg-white p-2.5 rounded-lg border border-slate-200">
                             <label class="flex items-center space-x-2 text-sm font-medium text-slate-700 cursor-pointer">
                                 <input type="checkbox" name="equipo_sel" value="${eq.nombre}" class="rounded text-blue-600 focus:ring-blue-500">
                                 <span>${eq.nombre} <br><small class="text-slate-500">${eq.modelo}</small> (Serial: <strong class="text-blue-600">${eq.serial}</strong>)</span>
                             </label>
-                            <!-- El input de cantidad ahora inicia en blanco (value="") -->
                             <input type="number" min="1" value="" placeholder="Cant" id="cant_${eq.nombre}" class="w-16 px-2 py-1 text-xs border rounded text-center focus:ring-2 focus:ring-blue-500 outline-none">
                         </div>
                     `;
@@ -470,18 +458,17 @@
             let items = [];
             if(tipo === 'Alquiler') {
                 const checkboxes = document.querySelectorAll('input[name="equipo_sel"]:checked');
-                checkboxes.forEach(cb => {
+                for (const cb of checkboxes) {
                     const cantInput = document.getElementById(`cant_${cb.value}`).value;
                     const cant = Number.parseInt(cantInput, 10);
-                    // Validar que si marca el equipo, escriba una cantidad válida mayor a 0
                     if (!cant || cant <= 0) {
                         alert(`Por favor ingresa una cantidad válida para el equipo: ${cb.value}`);
-                        throw new Error("Cantidad inválida");
+                        return;
                     }
                     items.push({ equipo_nombre: cb.value, cantidad: cant });
-                });
+                }
                 if(items.length === 0) {
-                    alert("Debes seleccionar al menos un equipo y especificar su cantidad.");
+                    alert("Debes seleccionar al menos un equipo disponible y especificar su cantidad.");
                     return;
                 }
             } else {
@@ -513,9 +500,9 @@
 
             if(res.ok) {
                 const data = await res.json();
-                alert(`¡Solicitud enviada con éxito! Código TKT generado: ${data.codigo}`);
+                alert(`¡Solicitud enviada con éxito! Código TKT generado: ${data.codigo}\n(Los equipos asignados ahora se marcaron como 'Alquilado' en el inventario).`);
                 e.target.reset();
-                await cargarInventario(); // Recarga los checkboxes con los inputs en blanco
+                if(usuarioActual.rol !== 'admin') cargarInventario();
                 await cargarTickets();
             } else {
                 const err = await res.json();
@@ -605,12 +592,13 @@
             }
 
             equipos.forEach(eq => {
+                const badgeColor = eq.estado === 'Disponible' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50 transition border-b">
                         <td class="p-3 font-bold text-blue-600">${eq.serial}</td>
                         <td class="p-3 font-semibold text-slate-900">${eq.nombre}</td>
                         <td class="p-3 text-slate-600">${eq.marca} - ${eq.modelo}</td>
-                        <td class="p-3"><span class="px-2.5 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700 font-medium">${eq.estado || 'Disponible'}</span></td>
+                        <td class="p-3"><span class="px-2.5 py-1 text-xs rounded-full ${badgeColor} font-medium">${eq.estado}</span></td>
                         <td class="p-3 text-slate-500">${eq.empresa_actual || 'Sin asignar (En Bodega)'}</td>
                     </tr>
                 `;
@@ -626,7 +614,7 @@
                 <th class="p-3">Tipo / Prioridad</th>
                 <th class="p-3">Empresa / Destino</th>
                 <th class="p-3">Equipos Asignados</th>
-                <th class="p-3">Estado Logístico y Comentarios</th>
+                <th class="p-3">Estado Logístico y Comentarios (Obligatorio para cambiar estado)</th>
                 <th class="p-3">Acciones / Gestión</th>
             `;
 
@@ -691,6 +679,7 @@
                         <select onchange="actualizarEstadoAdmin(${t.id}, this.value)" class="text-xs px-2 py-1 border rounded bg-slate-50 font-medium w-full">
                             ${options}
                         </select>
+                        <small class="block text-[10px] text-amber-600">⚠️ Requiere comentario previo</small>
                     </div>
                 `;
             } else {
@@ -708,7 +697,7 @@
         }
 
         async function cancelarSolicitud(ticketId) {
-            if (!confirm("¿Estás seguro de cancelar esta solicitud?")) return;
+            if (!confirm("¿Estás seguro de cancelar esta solicitud? Los equipos volverán a estar disponibles.")) return;
             const res = await fetch(`/api/tickets/${ticketId}`, { method: 'DELETE' });
             if (res.ok) {
                 alert("Solicitud cancelada con éxito.");
@@ -736,11 +725,11 @@
                     html += `<div><strong>${c.autor}</strong> (${c.rol}): ${c.comentario} <span class="text-slate-400 text-[10px]">(${c.fecha})</span></div>`;
                 });
             } else {
-                html += '<div class="text-slate-400 italic">No hay comentarios aún.</div>';
+                html += '<div class="text-amber-600 font-semibold italic">⚠️ Sin comentarios (Debe comentar para poder cambiar de estado).</div>';
             }
             html += `
                 <div class="mt-2 flex gap-1">
-                    <input type="text" id="input_comentario_${t.id}" placeholder="Escribir comentario..." class="w-full px-2 py-1 border rounded text-xs bg-white">
+                    <input type="text" id="input_comentario_${t.id}" placeholder="Escribir comentario obligatorio..." class="w-full px-2 py-1 border rounded text-xs bg-white">
                     <button onclick="enviarComentario(${t.id})" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs font-semibold">Comentar</button>
                 </div>
             </div>`;
@@ -753,17 +742,26 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ estado_logistico: nuevoEstado })
             });
+            const data = await res.json();
             if(res.ok) {
+                alert("¡Estado actualizado con éxito!");
+                if (adminSubTabActual === 'inventario') {
+                    await cargarInventarioGlobalAdmin();
+                }
                 await cargarTickets();
             } else {
-                alert("Error al actualizar el estado logístico");
+                alert(data.error || "Error al actualizar el estado logístico");
+                await cargarTickets();
             }
         }
 
         async function enviarComentario(ticketId) {
             const input = document.getElementById(`input_comentario_${ticketId}`);
             const texto = input.value.trim();
-            if(!texto) return;
+            if(!texto) {
+                alert("Por favor escribe un comentario antes de enviar.");
+                return;
+            }
 
             const payload = {
                 autor: usuarioActual.razon_social || usuarioActual.usuario,

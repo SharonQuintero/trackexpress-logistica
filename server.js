@@ -1,30 +1,17 @@
 const express = require('express');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Base de datos simulada en memoria con contraseñas cifradas por defecto
+// Base de datos en memoria
 let usuarios = [
-    { 
-        id: 1, 
-        usuario: 'admin', 
-        passwordHash: bcrypt.hashSync('123', 8), 
-        razon_social: 'Administrador TrackExpress', 
-        nit: '900000000-1', 
-        rol: 'admin' 
-    },
-    { 
-        id: 2, 
-        usuario: 'cliente1', 
-        passwordHash: bcrypt.hashSync('123', 8), 
-        razon_social: 'Tecnología e Innovación S.A.S.', 
-        nit: '900123456-2', 
-        rol: 'cliente' 
-    }
+    { id: 1, usuario: 'admin', password: bcrypt.hashSync('admin123', 8), razon_social: 'Administración TrackExpress', nit: '900000000-1', rol: 'admin' },
+    { id: 2, usuario: 'bancolombia', password: bcrypt.hashSync('banco123', 8), razon_social: 'Bancolombia S.A.', nit: '890903938-1', rol: 'cliente' }
 ];
 
 let inventario = [
@@ -41,167 +28,185 @@ let inventario = [
 ];
 
 let tickets = [];
+let contadorTickets = 100;
 
-// API Autenticación: Login con verificación de Hash
+// API: Autenticación (insensible a mayúsculas y espacios en el usuario)
 app.post('/api/auth/login', (req, res) => {
-    const { usuario, password } = req.body;
-    const user = usuarios.find(u => u.usuario.trim().toLowerCase() === usuario.trim().toLowerCase());
-    
-    if (user && bcrypt.compareSync(password, user.passwordHash)) {
-        // Excluimos el hash al enviar los datos del usuario al cliente
-        const { passwordHash, ...userSafe } = user;
-        res.json({ mensaje: 'Login exitoso', usuario: userSafe });
+    const usuarioLimpio = (req.body.usuario || '').trim().toLowerCase();
+    const passwordLimpia = (req.body.password || '').trim();
+
+    const user = usuarios.find(u => u.usuario.toLowerCase() === usuarioLimpio);
+    if (user && bcrypt.compareSync(passwordLimpia, user.password)) {
+        res.json({
+            usuario: {
+                id: user.id,
+                usuario: user.usuario,
+                razon_social: user.razon_social,
+                nit: user.nit,
+                rol: user.rol
+            }
+        });
     } else {
-        res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+        res.status(401).json({ error: 'Usuario o contraseña incorrectos. Verifica que estés usando admin / admin123' });
     }
 });
 
-// API Autenticación: Registro con cifrado de contraseña
+// API: Registro de empresas/clientes
 app.post('/api/auth/registro', (req, res) => {
-    const { usuario, password, razon_social, nit } = req.body;
-    
-    if (!usuario || !password || !razon_social || !nit) {
-        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    const usuarioLimpio = (req.body.usuario || '').trim();
+    const { password, razon_social, nit } = req.body;
+
+    if (usuarios.find(u => u.usuario.toLowerCase() === usuarioLimpio.toLowerCase())) {
+        return res.status(400).json({ error: 'El nombre de usuario ya está registrado' });
     }
 
-    const existe = usuarios.find(u => u.usuario.trim().toLowerCase() === usuario.trim().toLowerCase());
-    if (existe) {
-        return res.status(400).json({ error: 'El nombre de usuario ya está en uso' });
-    }
-
+    const hashedPassword = bcrypt.hashSync((password || '').trim(), 8);
     const nuevoUsuario = {
         id: usuarios.length + 1,
-        usuario: usuario.trim(),
-        passwordHash: bcrypt.hashSync(password, 8),
-        razon_social: razon_social.trim(),
-        nit: nit.trim(),
+        usuario: usuarioLimpio,
+        password: hashedPassword,
+        razon_social: (razon_social || '').trim(),
+        nit: (nit || '').trim(),
         rol: 'cliente'
     };
-
     usuarios.push(nuevoUsuario);
-    const { passwordHash, ...userSafe } = nuevoUsuario;
-    res.json({ mensaje: 'Registro exitoso', usuario: userSafe });
+    res.json({ mensaje: 'Usuario registrado con éxito' });
 });
 
-// API Inventario
+// API: Inventario
 app.get('/api/inventario', (req, res) => {
     res.json(inventario);
 });
 
-// API Obtener Tickets
+// API: Obtener Tickets
 app.get('/api/tickets', (req, res) => {
     const { empresa } = req.query;
     if (empresa) {
-        const filtrados = tickets.filter(t => t.cliente_empresa === empresa);
+        const filtrados = tickets.filter(t => t.cliente_empresa.toLowerCase() === empresa.toLowerCase());
         return res.json(filtrados);
     }
     res.json(tickets);
 });
 
-// API Crear Ticket
+// API: Crear Ticket (Marca equipos asignados como "Alquilado")
 app.post('/api/tickets', (req, res) => {
-    const data = req.body;
+    const {
+        cliente_empresa, nit, tipo_ticket, ciudad_destino, direccion_entrega,
+        persona_recibe, horario_recepcion, area_destino, tiempo_alquiler,
+        categoria_incidencia, prioridad, observaciones, fecha_deseada, items
+    } = req.body;
+
+    contadorTickets++;
+    const codigo = `TKT-${new Date().getFullYear()}-${contadorTickets}`;
+
+    if (tipo_ticket === 'Alquiler' && items && items.length > 0) {
+        items.forEach(item => {
+            const eq = inventario.find(e => e.nombre === item.equipo_nombre && e.estado === 'Disponible');
+            if (eq) {
+                eq.estado = 'Alquilado';
+                eq.empresa_actual = cliente_empresa;
+            }
+        });
+    }
+
     const nuevoTicket = {
-        id: tickets.length + 1,
-        codigo_ticket: `TKT-${Math.floor(1000 + Math.random() * 9000)}`,
-        cliente_empresa: data.cliente_empresa,
-        nit: data.nit,
-        tipo_ticket: data.tipo_ticket,
-        ciudad_destino: data.ciudad_destino || 'N/A',
-        direccion_entrega: data.direccion_entrega || 'N/A',
-        persona_recibe: data.persona_recibe || 'N/A',
-        horario_recepcion: data.horario_recepcion || 'N/A',
-        area_destino: data.area_destino || 'N/A',
-        tiempo_alquiler: data.tiempo_alquiler || 'N/A',
-        categoria_incidencia: data.categoria_incidencia || 'N/A',
-        prioridad: data.prioridad || 'Normal',
-        observaciones: data.observaciones || '',
-        fecha_deseada: data.fecha_deseada || new Date().toISOString().split('T')[0],
+        id: contadorTickets,
+        codigo_ticket: codigo,
+        cliente_empresa,
+        nit,
+        tipo_ticket,
+        ciudad_destino,
+        direccion_entrega,
+        persona_recibe,
+        horario_recepcion,
+        area_destino,
+        tiempo_alquiler,
+        categoria_incidencia,
+        prioridad: prioridad || 'Normal',
+        observaciones,
+        fecha_deseada,
         estado_logistico: '1. Solicitado',
-        detalles: data.items || [],
-        comentarios: [],
-        fecha_creacion: new Date().toLocaleString()
+        fecha_creacion: new Date().toLocaleDateString(),
+        detalles: items || [],
+        comentarios: []
     };
 
     tickets.push(nuevoTicket);
-    res.json({ mensaje: 'Ticket creado con éxito', codigo: nuevoTicket.codigo_ticket, id: nuevoTicket.id });
+    res.json({ mensaje: 'Ticket creado exitosamente', codigo: codigo });
 });
 
-// API Editar Solicitud (Solo si está en estado '1. Solicitado')
-app.put('/api/tickets/:id/editar', (req, res) => {
-    const ticketId = Number.parseInt(req.params.id, 10);
-    const data = req.body;
-    const ticket = tickets.find(t => t.id === ticketId);
-
-    if (!ticket) {
-        return res.status(404).json({ error: 'Ticket no encontrado' });
-    }
-
-    if (ticket.estado_logistico !== '1. Solicitado') {
-        return res.status(400).json({ error: 'Solo se pueden editar solicitudes que se encuentren en estado Solicitado' });
-    }
-
-    ticket.ciudad_destino = data.ciudad_destino || ticket.ciudad_destino;
-    ticket.direccion_entrega = data.direccion_entrega || ticket.direccion_entrega;
-    ticket.persona_recibe = data.persona_recibe || ticket.persona_recibe;
-    ticket.horario_recepcion = data.horario_recepcion || ticket.horario_recepcion;
-    ticket.observaciones = data.observaciones || ticket.observaciones;
-    ticket.prioridad = data.prioridad || ticket.prioridad;
-
-    res.json({ mensaje: 'Solicitud actualizada con éxito', ticket });
-});
-
-// API Cancelar / Eliminar Solicitud (Solo si está en estado '1. Solicitado')
-app.delete('/api/tickets/:id', (req, res) => {
-    const ticketId = Number.parseInt(req.params.id, 10);
-    const ticketIndex = tickets.findIndex(t => t.id === ticketId);
-
-    if (ticketIndex === -1) {
-        return res.status(404).json({ error: 'Ticket no encontrado' });
-    }
-
-    if (tickets[ticketIndex].estado_logistico !== '1. Solicitado') {
-        return res.status(400).json({ error: 'Solo se pueden cancelar solicitudes en estado Solicitado' });
-    }
-
-    tickets.splice(ticketIndex, 1);
-    res.json({ mensaje: 'Solicitud cancelada y eliminada con éxito' });
-});
-
-// API Actualizar Estado Logístico (Admin)
+// API: Actualizar Estado Logístico (Exige comentario previo y libera equipos al cerrar)
 app.put('/api/tickets/:id', (req, res) => {
     const ticketId = Number.parseInt(req.params.id, 10);
     const { estado_logistico } = req.body;
     const ticket = tickets.find(t => t.id === ticketId);
-    
-    if (ticket) {
-        ticket.estado_logistico = estado_logistico;
-        res.json({ mensaje: 'Estado actualizado con éxito', ticket });
-    } else {
-        res.status(404).json({ error: 'Ticket no encontrado' });
+
+    if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado' });
+
+    if (!ticket.comentarios || ticket.comentarios.length === 0) {
+        return res.status(400).json({
+            error: '⚠️ REGLA OBLIGATORIA: Debe registrar al menos un comentario/observación en el ticket antes de cambiar su estado o cerrarlo.'
+        });
     }
+
+    ticket.estado_logistico = estado_logistico;
+
+    if (estado_logistico === '7. Cerrado' && ticket.detalles) {
+        ticket.detalles.forEach(d => {
+            const eq = inventario.find(e => e.nombre === d.equipo_nombre && e.empresa_actual === ticket.cliente_empresa);
+            if (eq) {
+                eq.estado = 'Disponible';
+                eq.empresa_actual = null;
+            }
+        });
+    }
+
+    res.json({ mensaje: 'Estado actualizado con éxito', ticket });
 });
 
-// API Agregar Comentario
+// API: Agregar Comentario a un Ticket
 app.post('/api/tickets/:id/comentarios', (req, res) => {
     const ticketId = Number.parseInt(req.params.id, 10);
     const { autor, rol, comentario } = req.body;
     const ticket = tickets.find(t => t.id === ticketId);
 
-    if (ticket) {
-        if (!ticket.comentarios) ticket.comentarios = [];
-        ticket.comentarios.push({
-            autor,
-            rol,
-            comentario,
-            fecha: new Date().toLocaleString()
-        });
-        res.json({ mensaje: 'Comentario agregado', ticket });
-    } else {
-        res.status(404).json({ error: 'Ticket no encontrado' });
+    if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado' });
+
+    ticket.comentarios.push({
+        autor,
+        rol,
+        comentario,
+        fecha: new Date().toLocaleString()
+    });
+
+    res.json({ mensaje: 'Comentario agregado con éxito', ticket });
+});
+
+// API: Cancelar Ticket (Solo en estado 1 y libera inventario)
+app.delete('/api/tickets/:id', (req, res) => {
+    const ticketId = Number.parseInt(req.params.id, 10);
+    const index = tickets.findIndex(t => t.id === ticketId);
+    if (index === -1) return res.status(404).json({ error: 'Ticket no encontrado' });
+
+    const ticket = tickets[index];
+    if (ticket.estado_logistico !== '1. Solicitado') {
+        return res.status(400).json({ error: 'No se puede cancelar un ticket que ya está en proceso logístico' });
     }
+
+    if (ticket.detalles) {
+        ticket.detalles.forEach(d => {
+            const eq = inventario.find(e => e.nombre === d.equipo_nombre && e.empresa_actual === ticket.cliente_empresa);
+            if (eq) {
+                eq.estado = 'Disponible';
+                eq.empresa_actual = null;
+            }
+        });
+    }
+
+    tickets.splice(index, 1);
+    res.json({ mensaje: 'Ticket cancelado correctamente' });
 });
 
 app.listen(PORT, () => {
-    console.log(`Servidor corriendo en el puerto ${PORT}`);
+    console.log(`Servidor corriendo en puerto ${PORT}`);
 });
