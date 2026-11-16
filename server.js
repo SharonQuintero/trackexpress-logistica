@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Base de datos en memoria
+// Base de datos en memoria (Simulada)
 let usuarios = [
     { id: 1, usuario: 'admin', password: bcrypt.hashSync('admin123', 8), razon_social: 'Administración TrackExpress', nit: '900000000-1', rol: 'admin' },
     { id: 2, usuario: 'bancolombia', password: bcrypt.hashSync('banco123', 8), razon_social: 'Bancolombia S.A.', nit: '890903938-1', rol: 'cliente' }
@@ -30,45 +30,24 @@ let inventario = [
 let tickets = [];
 let contadorTickets = 100;
 
-// API: Autenticación (insensible a mayúsculas y espacios en el usuario)
+// API: Autenticación
 app.post('/api/auth/login', (req, res) => {
-    const usuarioLimpio = (req.body.usuario || '').trim().toLowerCase();
-    const passwordLimpia = (req.body.password || '').trim();
-
-    const user = usuarios.find(u => u.usuario.toLowerCase() === usuarioLimpio);
-    if (user && bcrypt.compareSync(passwordLimpia, user.password)) {
-        res.json({
-            usuario: {
-                id: user.id,
-                usuario: user.usuario,
-                razon_social: user.razon_social,
-                nit: user.nit,
-                rol: user.rol
-            }
-        });
+    const { usuario, password } = req.body;
+    const user = usuarios.find(u => u.usuario === usuario);
+    if (user && bcrypt.compareSync(password, user.password)) {
+        res.json({ usuario: { id: user.id, usuario: user.usuario, razon_social: user.razon_social, nit: user.nit, rol: user.rol } });
     } else {
-        res.status(401).json({ error: 'Usuario o contraseña incorrectos. Verifica que estés usando admin / admin123' });
+        res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
     }
 });
 
-// API: Registro de empresas/clientes
 app.post('/api/auth/registro', (req, res) => {
-    const usuarioLimpio = (req.body.usuario || '').trim();
-    const { password, razon_social, nit } = req.body;
-
-    if (usuarios.find(u => u.usuario.toLowerCase() === usuarioLimpio.toLowerCase())) {
+    const { usuario, password, razon_social, nit } = req.body;
+    if (usuarios.find(u => u.usuario === usuario)) {
         return res.status(400).json({ error: 'El nombre de usuario ya está registrado' });
     }
-
-    const hashedPassword = bcrypt.hashSync((password || '').trim(), 8);
-    const nuevoUsuario = {
-        id: usuarios.length + 1,
-        usuario: usuarioLimpio,
-        password: hashedPassword,
-        razon_social: (razon_social || '').trim(),
-        nit: (nit || '').trim(),
-        rol: 'cliente'
-    };
+    const hashedPassword = bcrypt.hashSync(password, 8);
+    const nuevoUsuario = { id: usuarios.length + 1, usuario, password: hashedPassword, razon_social, nit, rol: 'cliente' };
     usuarios.push(nuevoUsuario);
     res.json({ mensaje: 'Usuario registrado con éxito' });
 });
@@ -88,17 +67,14 @@ app.get('/api/tickets', (req, res) => {
     res.json(tickets);
 });
 
-// API: Crear Ticket (Marca equipos asignados como "Alquilado")
+// API: Crear Ticket (Actualiza inventario a "Alquilado/Ocupado")
 app.post('/api/tickets', (req, res) => {
-    const {
-        cliente_empresa, nit, tipo_ticket, ciudad_destino, direccion_entrega,
-        persona_recibe, horario_recepcion, area_destino, tiempo_alquiler,
-        categoria_incidencia, prioridad, observaciones, fecha_deseada, items
-    } = req.body;
-
+    const { cliente_empresa, nit, tipo_ticket, ciudad_destino, direccion_entrega, persona_recibe, horario_recepcion, area_destino, tiempo_alquiler, categoria_incidencia, prioridad, observaciones, fecha_deseada, items } = req.body;
+    
     contadorTickets++;
     const codigo = `TKT-${new Date().getFullYear()}-${contadorTickets}`;
 
+    // Si es un ticket de alquiler, actualizamos el inventario de los equipos seleccionados
     if (tipo_ticket === 'Alquiler' && items && items.length > 0) {
         items.forEach(item => {
             const eq = inventario.find(e => e.nombre === item.equipo_nombre && e.estado === 'Disponible');
@@ -135,7 +111,7 @@ app.post('/api/tickets', (req, res) => {
     res.json({ mensaje: 'Ticket creado exitosamente', codigo: codigo });
 });
 
-// API: Actualizar Estado Logístico (Exige comentario previo y libera equipos al cerrar)
+// API: Actualizar Estado Logístico (REGLA: Requiere al menos 1 comentario previo y libera inventario si se Cierra)
 app.put('/api/tickets/:id', (req, res) => {
     const ticketId = Number.parseInt(req.params.id, 10);
     const { estado_logistico } = req.body;
@@ -143,14 +119,14 @@ app.put('/api/tickets/:id', (req, res) => {
 
     if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado' });
 
+    // REGLA OBLIGATORIA: Debe tener al menos un comentario registrado antes de cambiar de estado
     if (!ticket.comentarios || ticket.comentarios.length === 0) {
-        return res.status(400).json({
-            error: '⚠️ REGLA OBLIGATORIA: Debe registrar al menos un comentario/observación en el ticket antes de cambiar su estado o cerrarlo.'
-        });
+        return res.status(400).json({ error: '⚠️ REGLA OBLIGATORIA: Debe registrar al menos un comentario/observación en el ticket antes de cambiar su estado o cerrarlo.' });
     }
 
     ticket.estado_logistico = estado_logistico;
 
+    // Si el estado pasa a "7. Cerrado", liberamos los equipos del inventario para que vuelvan a estar disponibles
     if (estado_logistico === '7. Cerrado' && ticket.detalles) {
         ticket.detalles.forEach(d => {
             const eq = inventario.find(e => e.nombre === d.equipo_nombre && e.empresa_actual === ticket.cliente_empresa);
@@ -182,7 +158,7 @@ app.post('/api/tickets/:id/comentarios', (req, res) => {
     res.json({ mensaje: 'Comentario agregado con éxito', ticket });
 });
 
-// API: Cancelar Ticket (Solo en estado 1 y libera inventario)
+// API: Cancelar Ticket (Solo si está en estado 1 y libera inventario)
 app.delete('/api/tickets/:id', (req, res) => {
     const ticketId = Number.parseInt(req.params.id, 10);
     const index = tickets.findIndex(t => t.id === ticketId);
@@ -193,6 +169,7 @@ app.delete('/api/tickets/:id', (req, res) => {
         return res.status(400).json({ error: 'No se puede cancelar un ticket que ya está en proceso logístico' });
     }
 
+    // Liberar equipos del inventario si se cancela
     if (ticket.detalles) {
         ticket.detalles.forEach(d => {
             const eq = inventario.find(e => e.nombre === d.equipo_nombre && e.empresa_actual === ticket.cliente_empresa);

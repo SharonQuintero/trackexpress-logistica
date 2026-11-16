@@ -330,35 +330,31 @@
 
         async function handleLogin(e) {
             e.preventDefault();
-            const usuario = document.getElementById('login-usuario').value.trim();
-            const password = document.getElementById('login-password').value.trim();
+            const usuario = document.getElementById('login-usuario').value;
+            const password = document.getElementById('login-password').value;
 
-            try {
-                const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ usuario, password })
-                });
-                const data = await res.json();
-                if(res.ok) {
-                    usuarioActual = data.usuario;
-                    localStorage.setItem('usuarioTrackExpress', JSON.stringify(usuarioActual));
-                    entrarDashboard();
-                } else {
-                    alert(data.error || "Credenciales incorrectas");
-                }
-            } catch (err) {
-                alert("Error de conexión con el servidor.");
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario, password })
+            });
+            const data = await res.json();
+            if(res.ok) {
+                usuarioActual = data.usuario;
+                localStorage.setItem('usuarioTrackExpress', JSON.stringify(usuarioActual));
+                entrarDashboard();
+            } else {
+                alert(data.error || "Credenciales incorrectas");
             }
         }
 
         async function handleRegistro(e) {
             e.preventDefault();
             const payload = {
-                usuario: document.getElementById('reg-usuario').value.trim(),
-                password: document.getElementById('reg-password').value.trim(),
-                razon_social: document.getElementById('reg-razon').value.trim(),
-                nit: document.getElementById('reg-nit').value.trim()
+                usuario: document.getElementById('reg-usuario').value,
+                password: document.getElementById('reg-password').value,
+                razon_social: document.getElementById('reg-razon').value,
+                nit: document.getElementById('reg-nit').value
             };
             const res = await fetch('/api/auth/registro', {
                 method: 'POST',
@@ -380,9 +376,7 @@
             document.getElementById('user-info-section').classList.remove('hidden');
             
             const esAdmin = usuarioActual.rol === 'admin';
-            let etiquetaIdentidad = esAdmin
-                ? `${usuarioActual.razon_social} (ADMIN)`
-                : `${usuarioActual.razon_social} - ${usuarioActual.usuario} (CLIENTE)`;
+            let etiquetaIdentidad = esAdmin ? `${usuarioActual.razon_social} (ADMIN)` : `${usuarioActual.razon_social} - ${usuarioActual.usuario} (CLIENTE)`;
 
             document.getElementById('nav-user-welcome').innerText = etiquetaIdentidad;
             document.getElementById('welcome-title').innerText = `Portal - ${usuarioActual.razon_social}`;
@@ -419,6 +413,7 @@
                 if (!contenedor) return;
                 contenedor.innerHTML = '';
                 
+                // Filtrar solo equipos disponibles
                 const disponibles = equipos.filter(eq => eq.estado === 'Disponible');
 
                 if (disponibles.length === 0) {
@@ -458,15 +453,15 @@
             let items = [];
             if(tipo === 'Alquiler') {
                 const checkboxes = document.querySelectorAll('input[name="equipo_sel"]:checked');
-                for (const cb of checkboxes) {
+                checkboxes.forEach(cb => {
                     const cantInput = document.getElementById(`cant_${cb.value}`).value;
                     const cant = Number.parseInt(cantInput, 10);
                     if (!cant || cant <= 0) {
                         alert(`Por favor ingresa una cantidad válida para el equipo: ${cb.value}`);
-                        return;
+                        throw new Error("Cantidad inválida");
                     }
                     items.push({ equipo_nombre: cb.value, cantidad: cant });
-                }
+                });
                 if(items.length === 0) {
                     alert("Debes seleccionar al menos un equipo disponible y especificar su cantidad.");
                     return;
@@ -751,7 +746,7 @@
                 await cargarTickets();
             } else {
                 alert(data.error || "Error al actualizar el estado logístico");
-                await cargarTickets();
+                await cargarTickets(); // Recarga para restablecer el select anterior
             }
         }
 
